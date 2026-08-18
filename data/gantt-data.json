@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-18T15:59:28.936Z",
+  "generatedAt": "2026-08-18T16:12:06.939Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -100,7 +100,7 @@
       "plannedEnd": "2026-08-31",
       "actualStart": "2026-07-30",
       "actualEnd": "2026-10-07",
-      "status": "Planning Phase"
+      "status": "Active"
     },
     {
       "id": "3950803481722756",
@@ -109,7 +109,7 @@
       "plannedEnd": "2026-07-31",
       "actualStart": "2026-05-01",
       "actualEnd": "2026-07-31",
-      "status": "Active"
+      "status": "Completed"
     },
     {
       "id": "8454403109093252",
