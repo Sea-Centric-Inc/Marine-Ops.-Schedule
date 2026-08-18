@@ -6,11 +6,12 @@
   const LABEL_WIDTH = 260;
   const ZOOM_PX_PER_DAY = { day: 36, week: 14, month: 5 };
 
-  // Priority order: Complete (status text) > In Progress (status text) >
-  // Active (today falls within the actual date range) > Not Started (fallback
-  // for everything else, including blank/ambiguous status text).
+  // Project Status is one of: Not Started, Planning Phase, Active, Complete.
+  // Color is a direct 1:1 mapping from that text; anything blank/unrecognized
+  // falls back to Not Started (red).
   const COMPLETE_WORDS = ["complete", "completed", "done", "closed"];
-  const IN_PROGRESS_WORDS = ["in progress", "in-progress", "ongoing", "active", "on track", "green"];
+  const ACTIVE_WORDS = ["active"];
+  const PLANNING_WORDS = ["planning phase", "planning"];
 
   const state = {
     tasks: [],
@@ -49,18 +50,11 @@
     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   }
 
-  function statusSlug(rawStatus, task) {
+  function statusSlug(rawStatus) {
     const key = String(rawStatus || "").trim().toLowerCase();
     if (COMPLETE_WORDS.includes(key)) return "complete";
-    if (IN_PROGRESS_WORDS.includes(key)) return "in-progress";
-
-    const actualStart = parseDate(task.actualStart);
-    const actualEnd = parseDate(task.actualEnd);
-    const today = todayUTC();
-    if (actualStart && actualEnd && today >= actualStart && today <= actualEnd) {
-      return "active";
-    }
-
+    if (ACTIVE_WORDS.includes(key)) return "active";
+    if (PLANNING_WORDS.includes(key)) return "in-progress";
     return "not-started";
   }
 
@@ -226,7 +220,7 @@
       if (!hay.includes(q)) return false;
     }
     if (state.statusFilter) {
-      const slug = statusSlug(task.status, task);
+      const slug = statusSlug(task.status);
       if (slug !== state.statusFilter) return false;
     }
     return true;
@@ -270,7 +264,7 @@
 
       const label = document.createElement("div");
       label.className = "row-label";
-      const status = statusSlug(task.status, task);
+      const status = statusSlug(task.status);
       const nameEl = document.createElement("div");
       nameEl.className = "task-name";
       nameEl.textContent = task.name;
@@ -354,7 +348,7 @@
   function populateStatusFilter(tasks) {
     const select = document.getElementById("status-filter");
     const seen = new Set();
-    tasks.forEach((t) => seen.add(statusSlug(t.status, t)));
+    tasks.forEach((t) => seen.add(statusSlug(t.status)));
     ["complete", "in-progress", "active", "not-started"].forEach((slug) => {
       if (!seen.has(slug)) return;
       const opt = document.createElement("option");
