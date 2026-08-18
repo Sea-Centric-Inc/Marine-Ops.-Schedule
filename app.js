@@ -6,41 +6,11 @@
   const LABEL_WIDTH = 260;
   const ZOOM_PX_PER_DAY = { day: 36, week: 14, month: 5 };
 
-  const STATUS_ALIASES = {
-    "complete": "complete",
-    "completed": "complete",
-    "done": "complete",
-    "closed": "complete",
-    "in progress": "in-progress",
-    "in-progress": "in-progress",
-    "ongoing": "in-progress",
-    "active": "in-progress",
-    "on track": "in-progress",
-    "green": "in-progress",
-    "at risk": "at-risk",
-    "at-risk": "at-risk",
-    "risk": "at-risk",
-    "caution": "at-risk",
-    "on hold": "at-risk",
-    "hold": "at-risk",
-    "yellow": "at-risk",
-    "amber": "at-risk",
-    "planning phase": "at-risk",
-    "planning": "at-risk",
-    "delayed": "delayed",
-    "late": "delayed",
-    "behind": "delayed",
-    "critical": "delayed",
-    "red": "delayed",
-    "not started": "not-started",
-    "not-started": "not-started",
-    "pending": "not-started",
-    "cancelled": "not-started",
-    "canceled": "not-started",
-    "gray": "not-started",
-    "grey": "not-started",
-    "": "not-started"
-  };
+  // Priority order: Complete (status text) > In Progress (status text) >
+  // Active (today falls within the actual date range) > Not Started (fallback
+  // for everything else, including blank/ambiguous status text).
+  const COMPLETE_WORDS = ["complete", "completed", "done", "closed"];
+  const IN_PROGRESS_WORDS = ["in progress", "in-progress", "ongoing", "active", "on track", "green"];
 
   const state = {
     tasks: [],
@@ -81,21 +51,16 @@
 
   function statusSlug(rawStatus, task) {
     const key = String(rawStatus || "").trim().toLowerCase();
-    if (STATUS_ALIASES[key]) return STATUS_ALIASES[key];
-    return deriveStatus(task);
-  }
+    if (COMPLETE_WORDS.includes(key)) return "complete";
+    if (IN_PROGRESS_WORDS.includes(key)) return "in-progress";
 
-  function deriveStatus(task) {
-    const plannedEnd = parseDate(task.plannedEnd);
     const actualStart = parseDate(task.actualStart);
     const actualEnd = parseDate(task.actualEnd);
     const today = todayUTC();
-    if (actualEnd) {
-      return plannedEnd && actualEnd.getTime() > plannedEnd.getTime() ? "delayed" : "complete";
+    if (actualStart && actualEnd && today >= actualStart && today <= actualEnd) {
+      return "active";
     }
-    if (actualStart) {
-      return plannedEnd && today.getTime() > plannedEnd.getTime() ? "at-risk" : "in-progress";
-    }
+
     return "not-started";
   }
 
@@ -103,8 +68,7 @@
     return {
       "complete": "Complete",
       "in-progress": "In Progress",
-      "at-risk": "At Risk",
-      "delayed": "Delayed",
+      "active": "Active",
       "not-started": "Not Started"
     }[slug] || "Unknown";
   }
@@ -391,7 +355,7 @@
     const select = document.getElementById("status-filter");
     const seen = new Set();
     tasks.forEach((t) => seen.add(statusSlug(t.status, t)));
-    ["complete", "in-progress", "at-risk", "delayed", "not-started"].forEach((slug) => {
+    ["complete", "in-progress", "active", "not-started"].forEach((slug) => {
       if (!seen.has(slug)) return;
       const opt = document.createElement("option");
       opt.value = slug;

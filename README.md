@@ -84,12 +84,17 @@ A field can be:
   instead of showing a misleading `0%` or blank owner.
 
 `status` reads your sheet's **Project Status** column directly and displays
-that exact text on each row and in the tooltip. For bar coloring, common
-wordings (Complete/Done, In Progress/On Track/Green, At Risk/On Hold/Yellow,
-Delayed/Critical/Red, Not Started/Pending) are recognized automatically; an
-unrecognized value falls back to a status derived from the dates. If your
-actual "Project Status" values don't fit any of those categories well, add
-them to `STATUS_ALIASES` near the top of [`app.js`](app.js).
+that exact text on each row and in the tooltip. Bar color is decided in this
+priority order (see `COMPLETE_WORDS` / `IN_PROGRESS_WORDS` / `statusSlug` near
+the top of [`app.js`](app.js)):
+
+1. Status text matches a "complete" word (Complete, Completed, Done, Closed) → **green**
+2. Status text matches an "in progress" word (In Progress, Ongoing, Active, On Track, Green) → **blue**
+3. Otherwise, if today's date falls within the Actual Start/End range → **gold** ("Active")
+4. Otherwise (Not Started, blank, or anything else, e.g. "Planning Phase") → **red**
+
+If your "Project Status" wording doesn't match step 1 or 2 well, add the
+words to `COMPLETE_WORDS` / `IN_PROGRESS_WORDS` in `app.js`.
 
 If you rename or add columns later, edit this file and commit to `main` -
 pushing a change to it automatically triggers a data refresh (see workflow

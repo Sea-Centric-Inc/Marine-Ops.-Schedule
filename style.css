@@ -17,9 +17,8 @@
 
   --status-complete: #2e8b57;
   --status-in-progress: #1f6feb;
-  --status-at-risk: #e08e0b;
-  --status-delayed: #d1332f;
-  --status-not-started: #9aa5b1;
+  --status-active: #c9982c;
+  --status-not-started: #d1332f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +38,9 @@
 
     --planned-fill: #1a2027;
     --planned-border: #9aa5b1;
+
+    --status-active: #e0b64a;
+    --status-not-started: #ff6b66;
   }
 }
 
@@ -169,8 +171,7 @@ body {
 .swatch-actual { border-radius: 2px; }
 .swatch-actual.status-complete { background: var(--status-complete); }
 .swatch-actual.status-in-progress { background: var(--status-in-progress); }
-.swatch-actual.status-at-risk { background: var(--status-at-risk); }
-.swatch-actual.status-delayed { background: var(--status-delayed); }
+.swatch-actual.status-active { background: var(--status-active); }
 .swatch-actual.status-not-started { background: var(--status-not-started); }
 
 .today-mark {
@@ -292,9 +293,8 @@ body {
 .bar-actual { border: none; }
 .bar-actual.status-complete { background: var(--status-complete); }
 .bar-actual.status-in-progress { background: var(--status-in-progress); }
-.bar-actual.status-at-risk { background: var(--status-at-risk); }
-.bar-actual.status-delayed { background: var(--status-delayed); }
-.bar-actual.status-not-started { background: var(--status-not-started); opacity: 0.5; }
+.bar-actual.status-active { background: var(--status-active); }
+.bar-actual.status-not-started { background: var(--status-not-started); }
 
 .bar-percent {
   position: absolute;
