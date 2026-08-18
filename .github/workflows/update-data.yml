@@ -1,0 +1,49 @@
+name: Update Gantt Data
+
+on:
+  schedule:
+    # Every 30 minutes. Adjust to taste - Smartsheet's API has generous rate limits.
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "config/smartsheet-map.json"
+      - "scripts/fetch-smartsheet.js"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-gantt-data
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch latest data from Smartsheet
+        env:
+          SMARTSHEET_ACCESS_TOKEN: ${{ secrets.SMARTSHEET_ACCESS_TOKEN }}
+          SMARTSHEET_SHEET_ID: ${{ secrets.SMARTSHEET_SHEET_ID }}
+        run: npm run fetch-data
+
+      - name: Commit updated data if changed
+        run: |
+          if git diff --quiet -- data/gantt-data.json; then
+            echo "No changes to data/gantt-data.json"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/gantt-data.json
+          git commit -m "chore: refresh schedule data from Smartsheet"
+          git push

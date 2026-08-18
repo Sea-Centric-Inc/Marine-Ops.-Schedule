@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-08-18T00:00:00Z",
+  "source": "sample",
+  "sheetName": "Sample Marine Operations Schedule",
+  "tasks": [
+    {
+      "id": "1",
+      "name": "Vessel Mobilization",
+      "plannedStart": "2026-07-01",
+      "plannedEnd": "2026-07-08",
+      "actualStart": "2026-07-01",
+      "actualEnd": "2026-07-09",
+      "percentComplete": 100,
+      "assignedTo": "Ops Team",
+      "status": "Complete"
+    },
+    {
+      "id": "2",
+      "name": "Site Survey",
+      "plannedStart": "2026-07-06",
+      "plannedEnd": "2026-07-14",
+      "actualStart": "2026-07-08",
+      "actualEnd": "2026-07-18",
+      "percentComplete": 100,
+      "assignedTo": "Survey Crew",
+      "status": "Complete"
+    },
+    {
+      "id": "3",
+      "name": "Anchor Handling",
+      "plannedStart": "2026-07-15",
+      "plannedEnd": "2026-07-25",
+      "actualStart": "2026-07-19",
+      "actualEnd": "2026-08-02",
+      "percentComplete": 100,
+      "assignedTo": "Deck Crew A",
+      "status": "Delayed"
+    },
+    {
+      "id": "4",
+      "name": "Pipeline Lay - Segment 1",
+      "plannedStart": "2026-07-26",
+      "plannedEnd": "2026-08-10",
+      "actualStart": "2026-08-03",
+      "actualEnd": "2026-08-19",
+      "percentComplete": 85,
+      "assignedTo": "Lay Barge Team",
+      "status": "At Risk"
+    },
+    {
+      "id": "5",
+      "name": "Pipeline Lay - Segment 2",
+      "plannedStart": "2026-08-11",
+      "plannedEnd": "2026-08-27",
+      "actualStart": "2026-08-14",
+      "actualEnd": "",
+      "percentComplete": 40,
+      "assignedTo": "Lay Barge Team",
+      "status": "In Progress"
+    },
+    {
+      "id": "6",
+      "name": "Subsea Tie-in",
+      "plannedStart": "2026-08-28",
+      "plannedEnd": "2026-09-10",
+      "actualStart": "",
+      "actualEnd": "",
+      "percentComplete": 0,
+      "assignedTo": "ROV Team",
+      "status": "Not Started"
+    },
+    {
+      "id": "7",
+      "name": "Commissioning",
+      "plannedStart": "2026-09-11",
+      "plannedEnd": "2026-09-25",
+      "actualStart": "",
+      "actualEnd": "",
+      "percentComplete": 0,
+      "assignedTo": "Commissioning Team",
+      "status": "Not Started"
+    },
+    {
+      "id": "8",
+      "name": "Demobilization",
+      "plannedStart": "2026-09-26",
+      "plannedEnd": "2026-10-02",
+      "actualStart": "",
+      "actualEnd": "",
+      "percentComplete": 0,
+      "assignedTo": "Ops Team",
+      "status": "Not Started"
+    }
+  ]
+}

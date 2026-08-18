@@ -1,0 +1,11 @@
+{
+  "_comment": "Map each logical field to the EXACT column title (case-sensitive) as it appears in your Smartsheet. Edit the right-hand values to match your sheet, then commit.",
+  "taskName": "Task Name",
+  "plannedStart": "Planned Start",
+  "plannedEnd": "Planned Finish",
+  "actualStart": "Actual Start",
+  "actualEnd": "Actual Finish",
+  "percentComplete": "% Complete",
+  "assignedTo": "Assigned To",
+  "status": "Status"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "marine-operations-gantt",
+  "version": "1.0.0",
+  "description": "Gantt chart (anticipated vs. actual dates) for a marine operations schedule, sourced from Smartsheet and hosted on GitHub Pages.",
+  "private": true,
+  "scripts": {
+    "fetch-data": "node scripts/fetch-smartsheet.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

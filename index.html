@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marine Operations - Schedule</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="app-header">
+  <div class="app-header-title">
+    <h1>Marine Operations Schedule</h1>
+    <p id="sheet-name" class="app-header-subtitle">Loading schedule&hellip;</p>
+  </div>
+  <div class="app-header-meta">
+    <span id="generated-at"></span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-group">
+    <input id="search" type="search" placeholder="Search tasks or owner&hellip;" />
+    <select id="status-filter">
+      <option value="">All statuses</option>
+    </select>
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Zoom</span>
+    <div class="zoom-buttons" role="group" aria-label="Zoom level">
+      <button data-zoom="day">Day</button>
+      <button data-zoom="week" class="active">Week</button>
+      <button data-zoom="month">Month</button>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-item"><span class="swatch swatch-planned"></span>Anticipated</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-complete"></span>Actual &ndash; Complete</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-in-progress"></span>Actual &ndash; In Progress</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-at-risk"></span>Actual &ndash; At Risk</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-delayed"></span>Actual &ndash; Delayed</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-not-started"></span>Not Started</span>
+  <span class="legend-item"><span class="today-mark"></span>Today</span>
+</div>
+
+<main id="gantt-root" class="gantt-root">
+  <p class="status-message" id="status-message">Loading schedule data&hellip;</p>
+</main>
+
+<footer class="app-footer">
+  <p>Data source: Smartsheet, synced via GitHub Actions. See <a href="https://github.com/stephensquires329-dotcom/Marine-Operations#readme">README</a> for setup.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
