@@ -89,7 +89,7 @@ priority order (see `COMPLETE_WORDS` / `IN_PROGRESS_WORDS` / `statusSlug` near
 the top of [`app.js`](app.js)):
 
 1. Status text matches a "complete" word (Complete, Completed, Done, Closed) → **green**
-2. Status text matches an "in progress" word (In Progress, Ongoing, Active, On Track, Green) → **blue**
+2. Status text matches an "in progress" word (In Progress, Ongoing, Active, On Track, Green) → **blue** ("Planning" in the legend)
 3. Otherwise, if today's date falls within the Actual Start/End range → **gold** ("Active")
 4. Otherwise (Not Started, blank, or anything else, e.g. "Planning Phase") → **red**
 

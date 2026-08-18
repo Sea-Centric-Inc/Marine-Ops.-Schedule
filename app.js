@@ -67,7 +67,7 @@
   function statusLabel(slug) {
     return {
       "complete": "Complete",
-      "in-progress": "In Progress",
+      "in-progress": "Planning",
       "active": "Active",
       "not-started": "Not Started"
     }[slug] || "Unknown";
