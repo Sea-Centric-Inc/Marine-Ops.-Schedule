@@ -1,5 +1,7 @@
 # Marine Operations Schedule
 
+Entails commercial/project side WRT Smartsheet API & Instruction Documents.
+
 A Gantt chart for the marine operations schedule, showing **anticipated** (planned)
 and **actual** dates on separate bars for every task. Data is pulled from a
 Smartsheet on a schedule and displayed as a static site on GitHub Pages.
