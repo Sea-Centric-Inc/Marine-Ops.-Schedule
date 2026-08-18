@@ -60,29 +60,40 @@ add two secrets:
 
 ### 5. Match the column mapping to your sheet
 
-Edit [`config/smartsheet-map.json`](config/smartsheet-map.json) so the values
-(right-hand side) exactly match your Smartsheet column titles, case-sensitive:
+[`config/smartsheet-map.json`](config/smartsheet-map.json) already reflects
+this sheet's columns:
 
 ```json
 {
-  "taskName": "Task Name",
-  "plannedStart": "Planned Start",
-  "plannedEnd": "Planned Finish",
-  "actualStart": "Actual Start",
-  "actualEnd": "Actual Finish",
-  "percentComplete": "% Complete",
-  "assignedTo": "Assigned To",
-  "status": "Status"
+  "taskName": ["Vessel", "RFP / Quote No."],
+  "plannedStart": "Anticipated Start Date",
+  "plannedEnd": "Anticipated End Date",
+  "actualStart": "Actual Start Date",
+  "actualEnd": "Actual End Date",
+  "percentComplete": "",
+  "assignedTo": "",
+  "status": "Project Status"
 }
 ```
 
-Only `taskName` is required - leave any other field pointing at a column
-that doesn't exist yet and it'll just stay blank in the chart. `status` is
-optional; if omitted or unrecognized, the chart derives a status
-(Not Started / In Progress / At Risk / Delayed / Complete) from the dates.
+A field can be:
+- a single column title,
+- an array of titles, joined together (used here for the task name, so each
+  row reads as "Vessel – RFP/Quote No."), or
+- `""` if you don't have that column - it's simply omitted from the chart
+  instead of showing a misleading `0%` or blank owner.
 
-Commit the change to `main`; pushing to this file automatically triggers a
-data refresh (see workflow triggers below).
+`status` reads your sheet's **Project Status** column directly and displays
+that exact text on each row and in the tooltip. For bar coloring, common
+wordings (Complete/Done, In Progress/On Track/Green, At Risk/On Hold/Yellow,
+Delayed/Critical/Red, Not Started/Pending) are recognized automatically; an
+unrecognized value falls back to a status derived from the dates. If your
+actual "Project Status" values don't fit any of those categories well, add
+them to `STATUS_ALIASES` near the top of [`app.js`](app.js).
+
+If you rename or add columns later, edit this file and commit to `main` -
+pushing a change to it automatically triggers a data refresh (see workflow
+triggers below).
 
 ### 6. Run the sync once
 

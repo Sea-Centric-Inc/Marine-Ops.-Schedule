@@ -10,18 +10,33 @@
     "complete": "complete",
     "completed": "complete",
     "done": "complete",
+    "closed": "complete",
     "in progress": "in-progress",
     "in-progress": "in-progress",
     "ongoing": "in-progress",
+    "active": "in-progress",
+    "on track": "in-progress",
+    "green": "in-progress",
     "at risk": "at-risk",
     "at-risk": "at-risk",
     "risk": "at-risk",
+    "caution": "at-risk",
+    "on hold": "at-risk",
+    "hold": "at-risk",
+    "yellow": "at-risk",
+    "amber": "at-risk",
     "delayed": "delayed",
     "late": "delayed",
     "behind": "delayed",
+    "critical": "delayed",
+    "red": "delayed",
     "not started": "not-started",
     "not-started": "not-started",
     "pending": "not-started",
+    "cancelled": "not-started",
+    "canceled": "not-started",
+    "gray": "not-started",
+    "grey": "not-started",
     "": "not-started"
   };
 
@@ -90,6 +105,11 @@
       "delayed": "Delayed",
       "not-started": "Not Started"
     }[slug] || "Unknown";
+  }
+
+  function displayStatusText(task, slug) {
+    const raw = String(task.status || "").trim();
+    return raw || statusLabel(slug);
   }
 
   async function loadData() {
@@ -200,11 +220,12 @@
     }
     tooltipEl.innerHTML =
       "<strong>" + escapeHtml(task.name) + "</strong>" +
-      "<div class='tt-row'><span>Status</span><span>" + statusLabel(status) + "</span></div>" +
+      "<div class='tt-row'><span>Status</span><span>" + escapeHtml(displayStatusText(task, status)) + "</span></div>" +
       "<div class='tt-row'><span>Anticipated</span><span>" + formatDate(plannedStart) + " → " + formatDate(plannedEnd) + "</span></div>" +
       "<div class='tt-row'><span>Actual</span><span>" + formatDate(actualStart) + " → " + formatDate(actualEnd) + "</span></div>" +
       "<div class='tt-row'><span>Variance</span><span>" + variance + "</span></div>" +
-      "<div class='tt-row'><span>% Complete</span><span>" + (task.percentComplete ?? 0) + "%</span></div>" +
+      (task.percentComplete !== undefined && task.percentComplete !== null
+        ? "<div class='tt-row'><span>% Complete</span><span>" + task.percentComplete + "%</span></div>" : "") +
       (task.assignedTo ? "<div class='tt-row'><span>Owner</span><span>" + escapeHtml(task.assignedTo) + "</span></div>" : "");
     tooltipEl.style.display = "block";
     positionTooltip(evt);
@@ -289,7 +310,11 @@
       nameEl.textContent = task.name;
       const metaEl = document.createElement("div");
       metaEl.className = "task-meta";
-      metaEl.textContent = (task.assignedTo ? task.assignedTo + " • " : "") + statusLabel(status) + " • " + (task.percentComplete ?? 0) + "%";
+      const metaParts = [];
+      if (task.assignedTo) metaParts.push(task.assignedTo);
+      metaParts.push(displayStatusText(task, status));
+      if (task.percentComplete !== undefined && task.percentComplete !== null) metaParts.push(task.percentComplete + "%");
+      metaEl.textContent = metaParts.join(" • ");
       label.appendChild(nameEl);
       label.appendChild(metaEl);
 

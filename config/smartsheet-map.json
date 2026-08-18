@@ -1,11 +1,11 @@
 {
-  "_comment": "Map each logical field to the EXACT column title (case-sensitive) as it appears in your Smartsheet. Edit the right-hand values to match your sheet, then commit.",
-  "taskName": "Task Name",
-  "plannedStart": "Planned Start",
-  "plannedEnd": "Planned Finish",
-  "actualStart": "Actual Start",
-  "actualEnd": "Actual Finish",
-  "percentComplete": "% Complete",
-  "assignedTo": "Assigned To",
-  "status": "Status"
+  "_comment": "Map each logical field to the EXACT column title (case-sensitive) as it appears in your Smartsheet. A field can be a single title, an array of titles (joined together, e.g. for a combined task name), or \"\" if you don't have that column.",
+  "taskName": ["Vessel", "RFP / Quote No."],
+  "plannedStart": "Anticipated Start Date",
+  "plannedEnd": "Anticipated End Date",
+  "actualStart": "Actual Start Date",
+  "actualEnd": "Actual End Date",
+  "percentComplete": "",
+  "assignedTo": "",
+  "status": "Project Status"
 }

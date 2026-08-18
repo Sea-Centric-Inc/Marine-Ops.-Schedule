@@ -73,19 +73,26 @@ async function main() {
 
   const sheet = await res.json();
 
-  const columnIdByField = {};
+  const columnIdsByField = {};
   Object.keys(fieldToTitle).forEach((field) => {
-    const title = fieldToTitle[field];
-    const col = (sheet.columns || []).find((c) => c.title === title);
-    if (col) {
-      columnIdByField[field] = col.id;
-    } else {
-      console.warn("WARNING: no column titled \"" + title + "\" found for field \"" + field + "\". Check config/smartsheet-map.json.");
-    }
+    const titles = fieldToTitle[field];
+    if (!titles) return; // "" means this field has no column in the sheet
+
+    const titleList = Array.isArray(titles) ? titles : [titles];
+    const ids = [];
+    titleList.forEach((title) => {
+      const col = (sheet.columns || []).find((c) => c.title === title);
+      if (col) {
+        ids.push(col.id);
+      } else {
+        console.warn("WARNING: no column titled \"" + title + "\" found for field \"" + field + "\". Check config/smartsheet-map.json.");
+      }
+    });
+    columnIdsByField[field] = ids;
   });
 
-  if (!columnIdByField.taskName) {
-    fail("Could not find the task name column in the sheet. Update config/smartsheet-map.json to match your sheet's column titles.");
+  if (!columnIdsByField.taskName || columnIdsByField.taskName.length === 0) {
+    fail("Could not find the task name column(s) in the sheet. Update config/smartsheet-map.json to match your sheet's column titles.");
   }
 
   const tasks = [];
@@ -95,22 +102,33 @@ async function main() {
       cellByColumnId[cell.columnId] = cell;
     });
 
-    const get = (field) => cellValue(cellByColumnId[columnIdByField[field]]);
+    const get = (field) => {
+      const ids = columnIdsByField[field] || [];
+      return ids
+        .map((id) => cellValue(cellByColumnId[id]))
+        .filter((v) => v !== "" && v !== undefined && v !== null)
+        .join(" – ");
+    };
 
     const name = get("taskName");
     if (!name) return; // skip blank / section-header rows
 
-    tasks.push({
+    const task = {
       id: String(row.id),
       name: String(name),
       plannedStart: toDateString(get("plannedStart")),
       plannedEnd: toDateString(get("plannedEnd")),
       actualStart: toDateString(get("actualStart")),
       actualEnd: toDateString(get("actualEnd")),
-      percentComplete: toPercent(get("percentComplete")),
-      assignedTo: String(get("assignedTo") || ""),
       status: String(get("status") || "")
-    });
+    };
+    if ((columnIdsByField.percentComplete || []).length) {
+      task.percentComplete = toPercent(get("percentComplete"));
+    }
+    if ((columnIdsByField.assignedTo || []).length) {
+      task.assignedTo = String(get("assignedTo") || "");
+    }
+    tasks.push(task);
   });
 
   const output = {
