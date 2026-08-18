@@ -25,6 +25,8 @@
     "hold": "at-risk",
     "yellow": "at-risk",
     "amber": "at-risk",
+    "planning phase": "at-risk",
+    "planning": "at-risk",
     "delayed": "delayed",
     "late": "delayed",
     "behind": "delayed",
