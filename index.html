@@ -23,6 +23,17 @@
     <select id="status-filter">
       <option value="">All statuses</option>
     </select>
+    <label class="checkbox-label">
+      <input id="hide-completed" type="checkbox" />
+      Hide completed
+    </label>
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Date range</span>
+    <input id="range-from" type="date" aria-label="Show from date" />
+    <span class="toolbar-label">to</span>
+    <input id="range-to" type="date" aria-label="Show to date" />
+    <button id="range-reset" type="button" class="text-button">Reset</button>
   </div>
   <div class="toolbar-group">
     <span class="toolbar-label">Zoom</span>

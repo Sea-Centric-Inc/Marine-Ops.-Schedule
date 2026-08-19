@@ -17,7 +17,10 @@
     tasks: [],
     zoom: "week",
     search: "",
-    statusFilter: ""
+    statusFilter: "",
+    hideCompleted: false,
+    dateFrom: null, // Date or null; null = auto-fit to task data
+    dateTo: null
   };
 
   const root = document.getElementById("gantt-root");
@@ -78,7 +81,7 @@
     return res.json();
   }
 
-  function computeRange(tasks) {
+  function computeAutoRange(tasks) {
     let min = null, max = null;
     tasks.forEach((t) => {
       [t.plannedStart, t.plannedEnd, t.actualStart, t.actualEnd].forEach((v) => {
@@ -92,6 +95,31 @@
     if (!min || today < min) min = today;
     if (!max || today > max) max = today;
     return { start: addDays(min, -4), end: addDays(max, 5) };
+  }
+
+  function computeRange(tasks) {
+    if (state.dateFrom && state.dateTo) {
+      return { start: state.dateFrom, end: addDays(state.dateTo, 1) };
+    }
+    return computeAutoRange(tasks);
+  }
+
+  function taskDateExtent(task) {
+    let min = null, max = null;
+    [task.plannedStart, task.plannedEnd, task.actualStart, task.actualEnd].forEach((v) => {
+      const d = parseDate(v);
+      if (!d) return;
+      if (!min || d < min) min = d;
+      if (!max || d > max) max = d;
+    });
+    return min ? { min, max } : null;
+  }
+
+  function formatDateInput(date) {
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
   }
 
   function buildHeader(range, pxPerDay, totalWidth) {
@@ -219,10 +247,15 @@
       const hay = (task.name + " " + (task.assignedTo || "")).toLowerCase();
       if (!hay.includes(q)) return false;
     }
-    if (state.statusFilter) {
-      const slug = statusSlug(task.status);
-      if (slug !== state.statusFilter) return false;
+    const slug = statusSlug(task.status);
+    if (state.statusFilter && slug !== state.statusFilter) return false;
+    if (state.hideCompleted && slug === "complete") return false;
+
+    if (state.dateFrom && state.dateTo) {
+      const extent = taskDateExtent(task);
+      if (extent && (extent.max < state.dateFrom || extent.min > state.dateTo)) return false;
     }
+
     return true;
   }
 
@@ -367,6 +400,28 @@
       state.statusFilter = e.target.value;
       render();
     });
+    document.getElementById("hide-completed").addEventListener("change", (e) => {
+      state.hideCompleted = e.target.checked;
+      render();
+    });
+    document.getElementById("range-from").addEventListener("change", (e) => {
+      state.dateFrom = parseDate(e.target.value);
+      if (state.dateFrom && !state.dateTo) state.dateTo = addDays(state.dateFrom, 30);
+      render();
+    });
+    document.getElementById("range-to").addEventListener("change", (e) => {
+      state.dateTo = parseDate(e.target.value);
+      if (state.dateTo && !state.dateFrom) state.dateFrom = addDays(state.dateTo, -30);
+      render();
+    });
+    document.getElementById("range-reset").addEventListener("click", () => {
+      state.dateFrom = null;
+      state.dateTo = null;
+      const auto = computeAutoRange(state.tasks);
+      document.getElementById("range-from").value = formatDateInput(auto.start);
+      document.getElementById("range-to").value = formatDateInput(addDays(auto.end, -1));
+      render();
+    });
     document.querySelectorAll(".zoom-buttons button").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".zoom-buttons button").forEach((b) => b.classList.remove("active"));
@@ -392,6 +447,9 @@
         ? "Data as of " + generated.toLocaleString()
         : "";
       populateStatusFilter(state.tasks);
+      const auto = computeAutoRange(state.tasks);
+      document.getElementById("range-from").value = formatDateInput(auto.start);
+      document.getElementById("range-to").value = formatDateInput(addDays(auto.end, -1));
       render();
     } catch (err) {
       root.innerHTML = "<p class='status-message'>Could not load schedule data: " + escapeHtml(err.message) + "</p>";
