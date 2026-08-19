@@ -13,6 +13,8 @@
   const ACTIVE_WORDS = ["active"];
   const PLANNING_WORDS = ["planning phase", "planning"];
 
+  const VESSELS = ["Connor Murphy", "Patrick & William", "Strait Signet", "Strait Hunter", "Strait Explorer"];
+
   const state = {
     tasks: [],
     zoom: "week",
@@ -20,7 +22,8 @@
     statusFilter: "",
     hideCompleted: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
-    dateTo: null
+    dateTo: null,
+    vessel: ""
   };
 
   const root = document.getElementById("gantt-root");
@@ -120,6 +123,66 @@
     const m = String(date.getUTCMonth() + 1).padStart(2, "0");
     const d = String(date.getUTCDate()).padStart(2, "0");
     return y + "-" + m + "-" + d;
+  }
+
+  // Vessel comes from its own field when available (fetched directly from the
+  // Smartsheet "Vessel" column); older cached data falls back to parsing it
+  // back out of "Vessel – RFP/Quote No." task names.
+  function getVessel(task) {
+    const raw = task.vessel || String(task.name || "").split(" – ")[0];
+    return raw.replace(/\s+/g, " ").trim();
+  }
+
+  // A task "occupies" the vessel for its actual dates if known (ground
+  // truth), an actual-start-to-planned-end estimate if the work has begun
+  // but has no recorded end yet, or its anticipated dates otherwise (a
+  // future booking that hasn't started). Returns null if no usable dates.
+  function taskOccupiedInterval(task) {
+    const plannedStart = parseDate(task.plannedStart);
+    const plannedEnd = parseDate(task.plannedEnd);
+    const actualStart = parseDate(task.actualStart);
+    const actualEnd = parseDate(task.actualEnd);
+    if (actualStart && actualEnd) return { start: actualStart, end: actualEnd };
+    if (actualStart && plannedEnd) return { start: actualStart, end: plannedEnd };
+    if (plannedStart && plannedEnd) return { start: plannedStart, end: plannedEnd };
+    return null;
+  }
+
+  function mergeIntervals(intervals) {
+    const sorted = intervals.slice().sort((a, b) => a.start - b.start);
+    const merged = [];
+    sorted.forEach((iv) => {
+      const last = merged[merged.length - 1];
+      if (last && iv.start <= addDays(last.end, 1)) {
+        if (iv.end > last.end) last.end = iv.end;
+      } else {
+        merged.push({ start: iv.start, end: iv.end });
+      }
+    });
+    return merged;
+  }
+
+  // Free gaps for one vessel within [rangeStart, rangeEnd], both inclusive.
+  function computeVesselGaps(vessel, tasks, rangeStart, rangeEnd) {
+    const busy = tasks
+      .filter((t) => getVessel(t) === vessel)
+      .map(taskOccupiedInterval)
+      .filter(Boolean)
+      .map((iv) => ({
+        start: iv.start < rangeStart ? rangeStart : iv.start,
+        end: iv.end > rangeEnd ? rangeEnd : iv.end
+      }))
+      .filter((iv) => iv.start <= iv.end);
+
+    const merged = mergeIntervals(busy);
+    const gaps = [];
+    let cursor = rangeStart;
+    merged.forEach((iv) => {
+      if (iv.start > cursor) gaps.push({ start: cursor, end: addDays(iv.start, -1) });
+      if (iv.end >= cursor) cursor = addDays(iv.end, 1);
+    });
+    if (cursor <= rangeEnd) gaps.push({ start: cursor, end: rangeEnd });
+    return gaps;
   }
 
   function buildHeader(range, pxPerDay, totalWidth) {
@@ -376,6 +439,63 @@
 
     scroll.appendChild(body);
     root.appendChild(scroll);
+
+    renderVesselAvailability(range);
+  }
+
+  function renderVesselAvailability(range) {
+    const results = document.getElementById("availability-results");
+    const rangeLabel = document.getElementById("availability-range-label");
+    rangeLabel.textContent = "within " + formatDate(range.start) + " – " + formatDate(addDays(range.end, -1));
+
+    if (!state.vessel) {
+      results.innerHTML = "<p class='status-message'>Pick a vessel to see open date gaps within the current date range above.</p>";
+      return;
+    }
+
+    const rangeEnd = addDays(range.end, -1); // range.end is exclusive in computeRange()
+    const gaps = computeVesselGaps(state.vessel, state.tasks, range.start, rangeEnd);
+
+    if (!gaps.length) {
+      results.innerHTML = "<p class='status-message'>" + escapeHtml(state.vessel) + " has no open availability in this date range &ndash; fully booked.</p>";
+      return;
+    }
+
+    const totalFreeDays = gaps.reduce((sum, g) => sum + daysBetween(g.start, g.end) + 1, 0);
+    const summary = document.createElement("p");
+    summary.className = "gap-summary";
+    summary.textContent = gaps.length + " open gap" + (gaps.length === 1 ? "" : "s") + ", " + totalFreeDays + " free day" + (totalFreeDays === 1 ? "" : "s") + " total.";
+
+    const list = document.createElement("ul");
+    list.className = "gap-list";
+    gaps.forEach((g) => {
+      const days = daysBetween(g.start, g.end) + 1;
+      const item = document.createElement("li");
+      item.className = "gap-item";
+      const dates = document.createElement("span");
+      dates.className = "gap-dates";
+      dates.textContent = formatDate(g.start) + " → " + formatDate(g.end);
+      const count = document.createElement("span");
+      count.className = "gap-days";
+      count.textContent = days + " day" + (days === 1 ? "" : "s");
+      item.appendChild(dates);
+      item.appendChild(count);
+      list.appendChild(item);
+    });
+
+    results.innerHTML = "";
+    results.appendChild(summary);
+    results.appendChild(list);
+  }
+
+  function populateVesselSelect() {
+    const select = document.getElementById("vessel-select");
+    VESSELS.forEach((v) => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      select.appendChild(opt);
+    });
   }
 
   function populateStatusFilter(tasks) {
@@ -402,6 +522,10 @@
     });
     document.getElementById("hide-completed").addEventListener("change", (e) => {
       state.hideCompleted = e.target.checked;
+      render();
+    });
+    document.getElementById("vessel-select").addEventListener("change", (e) => {
+      state.vessel = e.target.value;
       render();
     });
     document.getElementById("range-from").addEventListener("change", (e) => {
@@ -434,6 +558,8 @@
     tooltipEl = document.createElement("div");
     tooltipEl.className = "tooltip";
     document.body.appendChild(tooltipEl);
+
+    populateVesselSelect();
   }
 
   async function init() {

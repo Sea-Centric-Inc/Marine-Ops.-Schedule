@@ -219,6 +219,85 @@ body {
   background: var(--today-line);
 }
 
+.availability-panel {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+}
+
+.availability-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.availability-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.availability-select-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+#vessel-select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.availability-results .status-message {
+  padding: 8px 0;
+  text-align: left;
+}
+
+.gap-summary {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gap-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--status-complete);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.gap-item .gap-dates {
+  font-weight: 600;
+}
+
+.gap-item .gap-days {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .gantt-root {
   padding: 16px 24px 40px;
 }

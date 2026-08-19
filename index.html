@@ -54,6 +54,22 @@
   <span class="legend-item"><span class="today-mark"></span>Today</span>
 </div>
 
+<section class="availability-panel">
+  <div class="availability-header">
+    <h2>Vessel Availability</h2>
+    <label class="availability-select-label">
+      Vessel
+      <select id="vessel-select">
+        <option value="">Select a vessel&hellip;</option>
+      </select>
+    </label>
+    <span class="toolbar-label" id="availability-range-label"></span>
+  </div>
+  <div id="availability-results" class="availability-results">
+    <p class="status-message">Pick a vessel to see open date gaps within the current date range above.</p>
+  </div>
+</section>
+
 <main id="gantt-root" class="gantt-root">
   <p class="status-message" id="status-message">Loading schedule data&hellip;</p>
 </main>

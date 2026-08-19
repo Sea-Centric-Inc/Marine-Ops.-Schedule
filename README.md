@@ -66,6 +66,7 @@ this sheet's columns:
 ```json
 {
   "taskName": ["Vessel", "RFP / Quote No."],
+  "vessel": "Vessel",
   "plannedStart": "Anticipated Start Date",
   "plannedEnd": "Anticipated End Date",
   "actualStart": "Actual Start Date",
@@ -83,6 +84,10 @@ A field can be:
 - `""` if you don't have that column - it's simply omitted from the chart
   instead of showing a misleading `0%` or blank owner.
 
+`vessel` is a separate copy of the same "Vessel" column, kept distinct from
+the combined `taskName` so the Vessel Availability panel (below) can group
+tasks by vessel reliably.
+
 `status` reads your sheet's **Project Status** column directly and displays
 that exact text on each row and in the tooltip. Bar color is a direct mapping
 from that text (see `COMPLETE_WORDS` / `ACTIVE_WORDS` / `PLANNING_WORDS` /
@@ -96,12 +101,20 @@ from that text (see `COMPLETE_WORDS` / `ACTIVE_WORDS` / `PLANNING_WORDS` /
 If your "Project Status" picklist uses different wording for any of these,
 add it to the matching word list in `app.js`.
 
-If your "Project Status" wording doesn't match step 1 or 2 well, add the
-words to `COMPLETE_WORDS` / `IN_PROGRESS_WORDS` in `app.js`.
-
 If you rename or add columns later, edit this file and commit to `main` -
 pushing a change to it automatically triggers a data refresh (see workflow
 triggers below).
+
+### Vessel Availability panel
+
+Below the date range picker, the **Vessel Availability** section lets you
+pick one of the five fixed vessels (`VESSELS` near the top of `app.js`) and
+see every open date gap for it within the currently selected date range - the
+spans where it has no anticipated or actual booking at all. For each task, it
+uses actual dates when known, an actual-start-to-anticipated-end estimate for
+work that's begun but has no recorded end yet, or the anticipated dates for
+bookings that haven't started. To add, rename, or remove a vessel, edit the
+`VESSELS` array in `app.js`.
 
 ### 6. Run the sync once
 

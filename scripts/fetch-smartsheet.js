@@ -28,11 +28,16 @@ function fail(message) {
 
 function cellValue(cell) {
   if (!cell) return "";
+  let value = "";
   if (cell.displayValue !== undefined && cell.displayValue !== null && cell.displayValue !== "") {
-    return cell.displayValue;
+    value = cell.displayValue;
+  } else if (cell.value !== undefined && cell.value !== null) {
+    value = cell.value;
   }
-  if (cell.value !== undefined && cell.value !== null) return cell.value;
-  return "";
+  // Smartsheet text cells can contain embedded line breaks that render fine
+  // in a browser (CSS collapses them) but break exact-match comparisons in
+  // JS, e.g. matching a vessel name against a fixed list.
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : value;
 }
 
 function toDateString(raw) {
@@ -116,6 +121,7 @@ async function main() {
     const task = {
       id: String(row.id),
       name: String(name),
+      vessel: String(get("vessel") || ""),
       plannedStart: toDateString(get("plannedStart")),
       plannedEnd: toDateString(get("plannedEnd")),
       actualStart: toDateString(get("actualStart")),
