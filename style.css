@@ -19,6 +19,7 @@
   --status-in-progress: #1f6feb;
   --status-active: #c9982c;
   --status-not-started: #d1332f;
+  --status-extension: #8457e0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,6 +42,7 @@
 
     --status-active: #e0b64a;
     --status-not-started: #ff6b66;
+    --status-extension: #a98bff;
   }
 }
 
@@ -211,6 +213,7 @@ body {
 .swatch-actual.status-in-progress { background: var(--status-in-progress); }
 .swatch-actual.status-active { background: var(--status-active); }
 .swatch-actual.status-not-started { background: var(--status-not-started); }
+.swatch-extension { background: var(--status-extension); }
 
 .today-mark {
   display: inline-block;
@@ -393,6 +396,37 @@ body {
   text-overflow: ellipsis;
 }
 
+.ext-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.ext-row label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ext-row input[type="checkbox"] {
+  accent-color: var(--status-extension);
+  cursor: pointer;
+}
+
+.ext-days-input {
+  width: 44px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.72rem;
+}
+
 .row-timeline {
   position: relative;
 }
@@ -412,6 +446,8 @@ body {
 .bar-actual.status-in-progress { background: var(--status-in-progress); }
 .bar-actual.status-active { background: var(--status-active); }
 .bar-actual.status-not-started { background: var(--status-not-started); }
+
+.bar-extension { background: var(--status-extension); border: none; }
 
 .bar-percent {
   position: absolute;

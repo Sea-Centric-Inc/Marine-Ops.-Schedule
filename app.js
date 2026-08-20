@@ -2,7 +2,8 @@
   "use strict";
 
   const DATA_URL = "data/gantt-data.json";
-  const ROW_HEIGHT = 42;
+  const EXTENSIONS_KEY = "marineOpsExtensions_v1";
+  const ROW_HEIGHT = 60;
   const LABEL_WIDTH = 260;
   const ZOOM_PX_PER_DAY = { day: 36, week: 14, month: 5 };
 
@@ -23,8 +24,26 @@
     hideCompleted: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
     dateTo: null,
-    vessel: ""
+    vessel: "",
+    extensions: {} // taskId -> { days: number }, persisted to localStorage
   };
+
+  function loadExtensions() {
+    try {
+      const raw = localStorage.getItem(EXTENSIONS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveExtensions() {
+    try {
+      localStorage.setItem(EXTENSIONS_KEY, JSON.stringify(state.extensions));
+    } catch (e) {
+      // localStorage unavailable (e.g. private browsing) - extensions just won't persist across reloads
+    }
+  }
 
   const root = document.getElementById("gantt-root");
   let tooltipEl = null;
@@ -87,12 +106,16 @@
   function computeAutoRange(tasks) {
     let min = null, max = null;
     tasks.forEach((t) => {
+      let taskMax = null;
       [t.plannedStart, t.plannedEnd, t.actualStart, t.actualEnd].forEach((v) => {
         const d = parseDate(v);
         if (!d) return;
         if (!min || d < min) min = d;
-        if (!max || d > max) max = d;
+        if (!taskMax || d > taskMax) taskMax = d;
       });
+      const days = extensionDays(t);
+      if (taskMax && days > 0) taskMax = addDays(taskMax, days);
+      if (taskMax && (!max || taskMax > max)) max = taskMax;
     });
     const today = todayUTC();
     if (!min || today < min) min = today;
@@ -115,6 +138,8 @@
       if (!min || d < min) min = d;
       if (!max || d > max) max = d;
     });
+    const days = extensionDays(task);
+    if (max && days > 0) max = addDays(max, days);
     return min ? { min, max } : null;
   }
 
@@ -133,19 +158,28 @@
     return raw.replace(/\s+/g, " ").trim();
   }
 
+  function extensionDays(task) {
+    const ext = state.extensions[task.id];
+    return ext && ext.days > 0 ? ext.days : 0;
+  }
+
   // A task "occupies" the vessel for its actual dates if known (ground
   // truth), an actual-start-to-planned-end estimate if the work has begun
   // but has no recorded end yet, or its anticipated dates otherwise (a
-  // future booking that hasn't started). Returns null if no usable dates.
+  // future booking that hasn't started). An entered extension pushes the end
+  // out further. Returns null if no usable dates.
   function taskOccupiedInterval(task) {
     const plannedStart = parseDate(task.plannedStart);
     const plannedEnd = parseDate(task.plannedEnd);
     const actualStart = parseDate(task.actualStart);
     const actualEnd = parseDate(task.actualEnd);
-    if (actualStart && actualEnd) return { start: actualStart, end: actualEnd };
-    if (actualStart && plannedEnd) return { start: actualStart, end: plannedEnd };
-    if (plannedStart && plannedEnd) return { start: plannedStart, end: plannedEnd };
-    return null;
+    let interval = null;
+    if (actualStart && actualEnd) interval = { start: actualStart, end: actualEnd };
+    else if (actualStart && plannedEnd) interval = { start: actualStart, end: plannedEnd };
+    else if (plannedStart && plannedEnd) interval = { start: plannedStart, end: plannedEnd };
+    if (!interval) return null;
+    const days = extensionDays(task);
+    return days > 0 ? { start: interval.start, end: addDays(interval.end, days) } : interval;
   }
 
   function mergeIntervals(intervals) {
@@ -269,6 +303,8 @@
       const diff = daysBetween(plannedEnd, actualEnd);
       variance = diff === 0 ? "On time" : (diff > 0 ? "+" + diff + "d late" : diff + "d early");
     }
+    const extDays = extensionDays(task);
+    const extAnchor = actualEnd || plannedEnd;
     tooltipEl.innerHTML =
       "<strong>" + escapeHtml(task.name) + "</strong>" +
       "<div class='tt-row'><span>Status</span><span>" + escapeHtml(displayStatusText(task, status)) + "</span></div>" +
@@ -277,9 +313,55 @@
       "<div class='tt-row'><span>Variance</span><span>" + variance + "</span></div>" +
       (task.percentComplete !== undefined && task.percentComplete !== null
         ? "<div class='tt-row'><span>% Complete</span><span>" + task.percentComplete + "%</span></div>" : "") +
-      (task.assignedTo ? "<div class='tt-row'><span>Owner</span><span>" + escapeHtml(task.assignedTo) + "</span></div>" : "");
+      (task.assignedTo ? "<div class='tt-row'><span>Owner</span><span>" + escapeHtml(task.assignedTo) + "</span></div>" : "") +
+      (extDays > 0 && extAnchor
+        ? "<div class='tt-row'><span>Extension</span><span>+" + extDays + "d, through " + formatDate(addDays(extAnchor, extDays)) + "</span></div>" : "");
     tooltipEl.style.display = "block";
     positionTooltip(evt);
+  }
+
+  function buildExtensionRow(task) {
+    const extRow = document.createElement("div");
+    extRow.className = "ext-row";
+
+    const existing = state.extensions[task.id];
+
+    const extLabel = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = !!existing;
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        state.extensions[task.id] = { days: (existing && existing.days) || 1 };
+      } else {
+        delete state.extensions[task.id];
+      }
+      saveExtensions();
+      render();
+    });
+    extLabel.appendChild(checkbox);
+    extLabel.appendChild(document.createTextNode("Extension"));
+    extRow.appendChild(extLabel);
+
+    if (existing) {
+      const daysInput = document.createElement("input");
+      daysInput.type = "number";
+      daysInput.min = "1";
+      daysInput.className = "ext-days-input";
+      daysInput.value = existing.days;
+      daysInput.addEventListener("change", (e) => {
+        const v = Math.max(1, parseInt(e.target.value, 10) || 1);
+        state.extensions[task.id] = { days: v };
+        saveExtensions();
+        render();
+      });
+      extRow.appendChild(daysInput);
+      const suffix = document.createElement("span");
+      suffix.textContent = "days";
+      extRow.appendChild(suffix);
+    }
+
+    return extRow;
   }
 
   function positionTooltip(evt) {
@@ -373,6 +455,7 @@
       metaEl.textContent = metaParts.join(" • ");
       label.appendChild(nameEl);
       label.appendChild(metaEl);
+      label.appendChild(buildExtensionRow(task));
 
       const timeline = document.createElement("div");
       timeline.className = "row-timeline";
@@ -389,23 +472,26 @@
         bar.className = "bar bar-planned";
         bar.style.left = daysBetween(range.start, plannedStart) * pxPerDay + "px";
         bar.style.width = Math.max(daysBetween(plannedStart, plannedEnd) * pxPerDay, 3) + "px";
-        bar.style.top = "5px";
+        bar.style.top = "8px";
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
         timeline.appendChild(bar);
       }
 
+      let extensionAnchor = null; // { date, top } - where the extension bar continues from
+
       if (actualStart && actualEnd) {
         const bar = document.createElement("div");
         bar.className = "bar bar-actual status-" + status;
         bar.style.left = daysBetween(range.start, actualStart) * pxPerDay + "px";
         bar.style.width = Math.max(daysBetween(actualStart, actualEnd) * pxPerDay, 3) + "px";
-        bar.style.top = "22px";
+        bar.style.top = "26px";
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
         timeline.appendChild(bar);
+        extensionAnchor = { date: actualEnd, top: "26px" };
       } else if (actualStart && !actualEnd) {
         // in-progress: draw from actual start to today
         const end = todayUTC();
@@ -413,7 +499,24 @@
         bar.className = "bar bar-actual status-" + status;
         bar.style.left = daysBetween(range.start, actualStart) * pxPerDay + "px";
         bar.style.width = Math.max(daysBetween(actualStart, end) * pxPerDay, 3) + "px";
-        bar.style.top = "22px";
+        bar.style.top = "26px";
+        bar.style.height = "11px";
+        bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
+        bar.addEventListener("mouseleave", hideTooltip);
+        timeline.appendChild(bar);
+      } else if (plannedStart && plannedEnd) {
+        extensionAnchor = { date: plannedEnd, top: "8px" };
+      }
+
+      const extDays = extensionDays(task);
+      if (extDays > 0 && extensionAnchor) {
+        const extStart = addDays(extensionAnchor.date, 1);
+        const extEnd = addDays(extensionAnchor.date, extDays);
+        const bar = document.createElement("div");
+        bar.className = "bar bar-extension";
+        bar.style.left = daysBetween(range.start, extStart) * pxPerDay + "px";
+        bar.style.width = Math.max(daysBetween(extStart, extEnd) * pxPerDay, 3) + "px";
+        bar.style.top = extensionAnchor.top;
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
@@ -564,6 +667,7 @@
 
   async function init() {
     wireControls();
+    state.extensions = loadExtensions();
     try {
       const data = await loadData();
       state.tasks = data.tasks || [];
