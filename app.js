@@ -3,8 +3,8 @@
 
   const DATA_URL = "data/gantt-data.json";
   const EXTENSIONS_KEY = "marineOpsExtensions_v1";
-  const ROW_HEIGHT = 60;
-  const LABEL_WIDTH = 260;
+  const ROW_HEIGHT = 84;
+  const LABEL_WIDTH = 320;
   const ZOOM_PX_PER_DAY = { day: 36, week: 14, month: 5 };
 
   // Project Status is one of: Not Started, Planning Phase, Active, Complete.
@@ -472,7 +472,7 @@
         bar.className = "bar bar-planned";
         bar.style.left = daysBetween(range.start, plannedStart) * pxPerDay + "px";
         bar.style.width = Math.max(daysBetween(plannedStart, plannedEnd) * pxPerDay, 3) + "px";
-        bar.style.top = "8px";
+        bar.style.top = "27px";
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
@@ -486,12 +486,12 @@
         bar.className = "bar bar-actual status-" + status;
         bar.style.left = daysBetween(range.start, actualStart) * pxPerDay + "px";
         bar.style.width = Math.max(daysBetween(actualStart, actualEnd) * pxPerDay, 3) + "px";
-        bar.style.top = "26px";
+        bar.style.top = "46px";
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
         timeline.appendChild(bar);
-        extensionAnchor = { date: actualEnd, top: "26px" };
+        extensionAnchor = { date: actualEnd, top: "46px" };
       } else if (actualStart && !actualEnd) {
         // in-progress: draw from actual start to today
         const end = todayUTC();
@@ -499,13 +499,13 @@
         bar.className = "bar bar-actual status-" + status;
         bar.style.left = daysBetween(range.start, actualStart) * pxPerDay + "px";
         bar.style.width = Math.max(daysBetween(actualStart, end) * pxPerDay, 3) + "px";
-        bar.style.top = "26px";
+        bar.style.top = "46px";
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
         timeline.appendChild(bar);
       } else if (plannedStart && plannedEnd) {
-        extensionAnchor = { date: plannedEnd, top: "8px" };
+        extensionAnchor = { date: plannedEnd, top: "27px" };
       }
 
       const extDays = extensionDays(task);
