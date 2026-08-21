@@ -14,10 +14,11 @@
   </div>
   <div class="app-header-meta">
     <span id="generated-at"></span>
+    <button id="print-btn" type="button" class="text-button no-print">Print / Export PDF</button>
   </div>
 </header>
 
-<div class="toolbar">
+<div class="toolbar no-print">
   <div class="toolbar-group">
     <input id="search" type="search" placeholder="Search tasks or owner&hellip;" />
     <select id="status-filter">
@@ -26,6 +27,10 @@
     <label class="checkbox-label">
       <input id="hide-completed" type="checkbox" />
       Hide completed
+    </label>
+    <label class="checkbox-label">
+      <input id="overdue-only" type="checkbox" />
+      Overdue only
     </label>
   </div>
   <div class="toolbar-group">
@@ -47,27 +52,52 @@
 
 <div class="legend">
   <span class="legend-item"><span class="swatch swatch-planned"></span>Anticipated</span>
-  <span class="legend-item"><span class="swatch swatch-actual status-complete"></span>Actual &ndash; Complete</span>
-  <span class="legend-item"><span class="swatch swatch-actual status-in-progress"></span>Actual &ndash; Planning</span>
-  <span class="legend-item"><span class="swatch swatch-actual status-active"></span>Actual &ndash; Active</span>
-  <span class="legend-item"><span class="swatch swatch-actual status-not-started"></span>Not Started</span>
-  <span class="legend-item"><span class="swatch swatch-extension"></span>Extension</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-complete"></span>Actual &ndash; Complete (&#10003;)</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-in-progress"></span>Actual &ndash; Planning (&hellip;)</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-active"></span>Actual &ndash; Active (&#9654;)</span>
+  <span class="legend-item"><span class="swatch swatch-actual status-not-started"></span>Not Started (&#9675;)</span>
+  <span class="legend-item"><span class="swatch swatch-extension"></span>Extension (+)</span>
+  <span class="legend-item"><span class="marker-diamond-legend"></span>Milestone</span>
   <span class="legend-item"><span class="today-mark"></span>Today</span>
 </div>
 
-<section class="availability-panel">
+<section id="overdue-banner" class="overdue-banner" hidden>
+  <div class="overdue-banner-header">
+    <strong id="overdue-banner-title"></strong>
+  </div>
+  <ul id="overdue-list" class="overdue-list"></ul>
+</section>
+
+<section class="availability-panel no-print">
   <div class="availability-header">
     <h2>Vessel Availability</h2>
-    <label class="availability-select-label">
-      Vessel
-      <select id="vessel-select">
-        <option value="">Select a vessel&hellip;</option>
-      </select>
-    </label>
-    <span class="toolbar-label" id="availability-range-label"></span>
+    <button id="availability-toggle" type="button" class="text-button panel-toggle" aria-expanded="false">Show</button>
   </div>
-  <div id="availability-results" class="availability-results">
-    <p class="status-message">Pick a vessel to see open date gaps within the current date range above.</p>
+  <div id="availability-body" class="availability-body collapsed">
+    <div class="availability-controls">
+      <label class="availability-select-label">
+        Vessel
+        <select id="vessel-select">
+          <option value="">Select a vessel&hellip;</option>
+        </select>
+      </label>
+      <span class="toolbar-label" id="availability-range-label"></span>
+    </div>
+    <div id="availability-results" class="availability-results">
+      <p class="status-message">Pick a vessel to see open date gaps within the current date range above.</p>
+    </div>
+  </div>
+</section>
+
+<section class="availability-panel no-print">
+  <div class="availability-header">
+    <h2>Active Extensions</h2>
+    <button id="extensions-toggle" type="button" class="text-button panel-toggle" aria-expanded="false">Show</button>
+  </div>
+  <div id="extensions-body" class="availability-body collapsed">
+    <div id="extensions-results" class="availability-results">
+      <p class="status-message">No extensions applied yet.</p>
+    </div>
   </div>
 </section>
 
@@ -75,9 +105,9 @@
   <p class="status-message" id="status-message">Loading schedule data&hellip;</p>
 </main>
 
-<footer class="app-footer">
+<footer class="app-footer no-print">
   <p>Data source: Smartsheet, synced via GitHub Actions. See <a href="https://github.com/stephensquires329-dotcom/Marine-Operations#readme">README</a> for setup.</p>
-  <p>Extension days (below) are saved in this browser only &ndash; they don't sync across devices or teammates.</p>
+  <p>Extension days and reasons (below) are saved in this browser only &ndash; they don't sync across devices or teammates.</p>
 </footer>
 
 <script src="app.js"></script>

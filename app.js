@@ -22,10 +22,13 @@
     search: "",
     statusFilter: "",
     hideCompleted: false,
+    showOverdueOnly: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
     dateTo: null,
     vessel: "",
-    extensions: {} // taskId -> { days: number }, persisted to localStorage
+    availabilityExpanded: false,
+    extensionsExpanded: false,
+    extensions: {} // taskId -> { days: number, reason: string }, persisted to localStorage
   };
 
   function loadExtensions() {
@@ -182,6 +185,17 @@
     return days > 0 ? { start: interval.start, end: addDays(interval.end, days) } : interval;
   }
 
+  // A task is overdue when its anticipated end date (extended, if an
+  // extension is set) has passed with no actual completion recorded.
+  function isOverdue(task) {
+    const plannedEnd = parseDate(task.plannedEnd);
+    if (!plannedEnd) return false;
+    if (parseDate(task.actualEnd)) return false;
+    const days = extensionDays(task);
+    const effectiveEnd = days > 0 ? addDays(plannedEnd, days) : plannedEnd;
+    return effectiveEnd < todayUTC();
+  }
+
   function mergeIntervals(intervals) {
     const sorted = intervals.slice().sort((a, b) => a.start - b.start);
     const merged = [];
@@ -303,6 +317,7 @@
       const diff = daysBetween(plannedEnd, actualEnd);
       variance = diff === 0 ? "On time" : (diff > 0 ? "+" + diff + "d late" : diff + "d early");
     }
+    const extEntry = state.extensions[task.id];
     const extDays = extensionDays(task);
     const extAnchor = actualEnd || plannedEnd;
     tooltipEl.innerHTML =
@@ -315,7 +330,11 @@
         ? "<div class='tt-row'><span>% Complete</span><span>" + task.percentComplete + "%</span></div>" : "") +
       (task.assignedTo ? "<div class='tt-row'><span>Owner</span><span>" + escapeHtml(task.assignedTo) + "</span></div>" : "") +
       (extDays > 0 && extAnchor
-        ? "<div class='tt-row'><span>Extension</span><span>+" + extDays + "d, through " + formatDate(addDays(extAnchor, extDays)) + "</span></div>" : "");
+        ? "<div class='tt-row'><span>Extension</span><span>+" + extDays + "d, through " + formatDate(addDays(extAnchor, extDays)) + "</span></div>"
+        : "") +
+      (extDays > 0 && extEntry && extEntry.reason
+        ? "<div class='tt-row'><span>Reason</span><span>" + escapeHtml(extEntry.reason) + "</span></div>" : "") +
+      (isOverdue(task) ? "<div class='tt-row'><span>&#9888;</span><span>Overdue</span></div>" : "");
     tooltipEl.style.display = "block";
     positionTooltip(evt);
   }
@@ -332,7 +351,7 @@
     checkbox.checked = !!existing;
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) {
-        state.extensions[task.id] = { days: (existing && existing.days) || 1 };
+        state.extensions[task.id] = { days: (existing && existing.days) || 1, reason: (existing && existing.reason) || "" };
       } else {
         delete state.extensions[task.id];
       }
@@ -349,16 +368,30 @@
       daysInput.min = "1";
       daysInput.className = "ext-days-input";
       daysInput.value = existing.days;
+      daysInput.title = "Extension length in days";
       daysInput.addEventListener("change", (e) => {
         const v = Math.max(1, parseInt(e.target.value, 10) || 1);
-        state.extensions[task.id] = { days: v };
+        state.extensions[task.id] = { days: v, reason: existing.reason || "" };
         saveExtensions();
         render();
       });
       extRow.appendChild(daysInput);
-      const suffix = document.createElement("span");
-      suffix.textContent = "days";
-      extRow.appendChild(suffix);
+
+      const unit = document.createElement("span");
+      unit.textContent = "d";
+      extRow.appendChild(unit);
+
+      const reasonInput = document.createElement("input");
+      reasonInput.type = "text";
+      reasonInput.className = "ext-reason-input";
+      reasonInput.placeholder = "reason / requested by";
+      reasonInput.value = existing.reason || "";
+      reasonInput.addEventListener("change", (e) => {
+        state.extensions[task.id] = { days: existing.days, reason: e.target.value.trim() };
+        saveExtensions();
+        render();
+      });
+      extRow.appendChild(reasonInput);
     }
 
     return extRow;
@@ -395,6 +428,7 @@
     const slug = statusSlug(task.status);
     if (state.statusFilter && slug !== state.statusFilter) return false;
     if (state.hideCompleted && slug === "complete") return false;
+    if (state.showOverdueOnly && !isOverdue(task)) return false;
 
     if (state.dateFrom && state.dateTo) {
       const extent = taskDateExtent(task);
@@ -405,10 +439,13 @@
   }
 
   function render() {
+    renderOverdueBanner();
+
     root.innerHTML = "";
     const tasks = state.tasks;
     if (!tasks.length) {
       root.innerHTML = "<p class='status-message'>No tasks found in the schedule data.</p>";
+      updateUrlFromState();
       return;
     }
 
@@ -452,6 +489,7 @@
       if (task.assignedTo) metaParts.push(task.assignedTo);
       metaParts.push(displayStatusText(task, status));
       if (task.percentComplete !== undefined && task.percentComplete !== null) metaParts.push(task.percentComplete + "%");
+      if (isOverdue(task)) metaParts.push("overdue");
       metaEl.textContent = metaParts.join(" • ");
       label.appendChild(nameEl);
       label.appendChild(metaEl);
@@ -468,29 +506,43 @@
       const actualEnd = parseDate(task.actualEnd);
 
       if (plannedStart && plannedEnd) {
-        const bar = document.createElement("div");
-        bar.className = "bar bar-planned";
-        bar.style.left = daysBetween(range.start, plannedStart) * pxPerDay + "px";
-        bar.style.width = Math.max(daysBetween(plannedStart, plannedEnd) * pxPerDay, 3) + "px";
-        bar.style.top = "27px";
-        bar.style.height = "11px";
-        bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
-        bar.addEventListener("mouseleave", hideTooltip);
-        timeline.appendChild(bar);
+        const x = daysBetween(range.start, plannedStart) * pxPerDay;
+        const el = document.createElement("div");
+        if (daysBetween(plannedStart, plannedEnd) === 0) {
+          el.className = "marker-diamond marker-planned";
+          el.style.left = (x - 5) + "px";
+          el.style.top = "27px";
+        } else {
+          el.className = "bar bar-planned";
+          el.style.left = x + "px";
+          el.style.width = Math.max(daysBetween(plannedStart, plannedEnd) * pxPerDay, 3) + "px";
+          el.style.top = "27px";
+          el.style.height = "11px";
+        }
+        el.addEventListener("mousemove", (e) => showTooltip(e, task, status));
+        el.addEventListener("mouseleave", hideTooltip);
+        timeline.appendChild(el);
       }
 
       let extensionAnchor = null; // { date, top } - where the extension bar continues from
 
       if (actualStart && actualEnd) {
-        const bar = document.createElement("div");
-        bar.className = "bar bar-actual status-" + status;
-        bar.style.left = daysBetween(range.start, actualStart) * pxPerDay + "px";
-        bar.style.width = Math.max(daysBetween(actualStart, actualEnd) * pxPerDay, 3) + "px";
-        bar.style.top = "46px";
-        bar.style.height = "11px";
-        bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
-        bar.addEventListener("mouseleave", hideTooltip);
-        timeline.appendChild(bar);
+        const x = daysBetween(range.start, actualStart) * pxPerDay;
+        const el = document.createElement("div");
+        if (daysBetween(actualStart, actualEnd) === 0) {
+          el.className = "marker-diamond status-" + status;
+          el.style.left = (x - 5) + "px";
+          el.style.top = "46px";
+        } else {
+          el.className = "bar bar-actual status-" + status;
+          el.style.left = x + "px";
+          el.style.width = Math.max(daysBetween(actualStart, actualEnd) * pxPerDay, 3) + "px";
+          el.style.top = "46px";
+          el.style.height = "11px";
+        }
+        el.addEventListener("mousemove", (e) => showTooltip(e, task, status));
+        el.addEventListener("mouseleave", hideTooltip);
+        timeline.appendChild(el);
         extensionAnchor = { date: actualEnd, top: "46px" };
       } else if (actualStart && !actualEnd) {
         // in-progress: draw from actual start to today
@@ -544,6 +596,96 @@
     root.appendChild(scroll);
 
     renderVesselAvailability(range);
+    renderExtensionsSummary();
+    updateUrlFromState();
+  }
+
+  function renderOverdueBanner() {
+    const banner = document.getElementById("overdue-banner");
+    const title = document.getElementById("overdue-banner-title");
+    const list = document.getElementById("overdue-list");
+    const overdueTasks = state.tasks.filter(isOverdue);
+
+    if (!overdueTasks.length) {
+      banner.hidden = true;
+      return;
+    }
+
+    banner.hidden = false;
+    title.textContent = "⚠ " + overdueTasks.length + " task" + (overdueTasks.length === 1 ? "" : "s") +
+      " overdue – anticipated end date passed with no actual completion recorded.";
+
+    list.innerHTML = "";
+    overdueTasks
+      .slice()
+      .sort((a, b) => parseDate(a.plannedEnd) - parseDate(b.plannedEnd))
+      .forEach((t) => {
+        const plannedEnd = parseDate(t.plannedEnd);
+        const daysLate = daysBetween(plannedEnd, todayUTC());
+        const li = document.createElement("li");
+        li.textContent = t.name + " — anticipated end " + formatDate(plannedEnd);
+        const daysSpan = document.createElement("span");
+        daysSpan.className = "overdue-days";
+        daysSpan.textContent = daysLate + "d late";
+        li.appendChild(daysSpan);
+        list.appendChild(li);
+      });
+  }
+
+  function renderExtensionsSummary() {
+    const results = document.getElementById("extensions-results");
+    const toggle = document.getElementById("extensions-toggle");
+    const entries = state.tasks
+      .map((t) => ({ task: t, ext: state.extensions[t.id] }))
+      .filter((e) => e.ext);
+
+    toggle.textContent = (state.extensionsExpanded ? "Hide" : "Show") + " (" + entries.length + ")";
+
+    if (!entries.length) {
+      results.innerHTML = "<p class='status-message'>No extensions applied yet.</p>";
+      return;
+    }
+
+    const list = document.createElement("ul");
+    list.className = "ext-summary-list";
+    entries.forEach(({ task, ext }) => {
+      const item = document.createElement("li");
+      item.className = "ext-summary-item";
+
+      const info = document.createElement("div");
+      const nameEl = document.createElement("div");
+      nameEl.className = "ext-summary-name";
+      nameEl.textContent = task.name;
+      const detailEl = document.createElement("div");
+      detailEl.className = "ext-summary-detail";
+      detailEl.textContent = "+" + ext.days + " day" + (ext.days === 1 ? "" : "s") + " • " + getVessel(task);
+      info.appendChild(nameEl);
+      info.appendChild(detailEl);
+      if (ext.reason) {
+        const reasonEl = document.createElement("div");
+        reasonEl.className = "ext-summary-reason";
+        reasonEl.textContent = ext.reason;
+        info.appendChild(reasonEl);
+      }
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "ext-remove-btn";
+      removeBtn.title = "Remove extension";
+      removeBtn.textContent = "✕";
+      removeBtn.addEventListener("click", () => {
+        delete state.extensions[task.id];
+        saveExtensions();
+        render();
+      });
+
+      item.appendChild(info);
+      item.appendChild(removeBtn);
+      list.appendChild(item);
+    });
+
+    results.innerHTML = "";
+    results.appendChild(list);
   }
 
   function renderVesselAvailability(range) {
@@ -558,16 +700,19 @@
 
     const rangeEnd = addDays(range.end, -1); // range.end is exclusive in computeRange()
     const gaps = computeVesselGaps(state.vessel, state.tasks, range.start, rangeEnd);
+    const totalRangeDays = daysBetween(range.start, rangeEnd) + 1;
 
     if (!gaps.length) {
-      results.innerHTML = "<p class='status-message'>" + escapeHtml(state.vessel) + " has no open availability in this date range &ndash; fully booked.</p>";
+      results.innerHTML = "<p class='status-message'>" + escapeHtml(state.vessel) + " has no open availability in this date range &ndash; fully booked (100% utilized).</p>";
       return;
     }
 
     const totalFreeDays = gaps.reduce((sum, g) => sum + daysBetween(g.start, g.end) + 1, 0);
+    const utilizationPct = Math.round(((totalRangeDays - totalFreeDays) / totalRangeDays) * 100);
     const summary = document.createElement("p");
     summary.className = "gap-summary";
-    summary.textContent = gaps.length + " open gap" + (gaps.length === 1 ? "" : "s") + ", " + totalFreeDays + " free day" + (totalFreeDays === 1 ? "" : "s") + " total.";
+    summary.textContent = gaps.length + " open gap" + (gaps.length === 1 ? "" : "s") + ", " + totalFreeDays + " free day" +
+      (totalFreeDays === 1 ? "" : "s") + " total (" + utilizationPct + "% utilized over this range).";
 
     const list = document.createElement("ul");
     list.className = "gap-list";
@@ -614,6 +759,73 @@
     });
   }
 
+  // Keeps the URL query string in sync with filter/view state (not panel
+  // collapse state) so the current view can be shared via a plain link.
+  function updateUrlFromState() {
+    const params = new URLSearchParams();
+    if (state.search) params.set("q", state.search);
+    if (state.statusFilter) params.set("status", state.statusFilter);
+    if (state.hideCompleted) params.set("hideCompleted", "1");
+    if (state.showOverdueOnly) params.set("overdue", "1");
+    if (state.vessel) params.set("vessel", state.vessel);
+    if (state.dateFrom) params.set("from", formatDateInput(state.dateFrom));
+    if (state.dateTo) params.set("to", formatDateInput(state.dateTo));
+    if (state.zoom !== "week") params.set("zoom", state.zoom);
+    const qs = params.toString();
+    const newUrl = window.location.pathname + (qs ? "?" + qs : "");
+    window.history.replaceState(null, "", newUrl);
+  }
+
+  function restoreStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("q")) {
+      state.search = params.get("q");
+      document.getElementById("search").value = state.search;
+    }
+    if (params.has("status")) {
+      state.statusFilter = params.get("status");
+      document.getElementById("status-filter").value = state.statusFilter;
+    }
+    if (params.get("hideCompleted") === "1") {
+      state.hideCompleted = true;
+      document.getElementById("hide-completed").checked = true;
+    }
+    if (params.get("overdue") === "1") {
+      state.showOverdueOnly = true;
+      document.getElementById("overdue-only").checked = true;
+    }
+    if (params.has("vessel")) {
+      const vesselSelect = document.getElementById("vessel-select");
+      vesselSelect.value = params.get("vessel");
+      if (vesselSelect.value === params.get("vessel")) {
+        state.vessel = params.get("vessel");
+        state.availabilityExpanded = true;
+        document.getElementById("availability-body").classList.remove("collapsed");
+        const toggle = document.getElementById("availability-toggle");
+        toggle.textContent = "Hide";
+        toggle.setAttribute("aria-expanded", "true");
+      }
+    }
+    if (params.has("from")) {
+      const d = parseDate(params.get("from"));
+      if (d) state.dateFrom = d;
+    }
+    if (params.has("to")) {
+      const d = parseDate(params.get("to"));
+      if (d) state.dateTo = d;
+    }
+    if (state.dateFrom && !state.dateTo) state.dateTo = addDays(state.dateFrom, 30);
+    if (state.dateTo && !state.dateFrom) state.dateFrom = addDays(state.dateTo, -30);
+
+    if (params.has("zoom") && ZOOM_PX_PER_DAY[params.get("zoom")]) {
+      state.zoom = params.get("zoom");
+      document.querySelectorAll(".zoom-buttons button").forEach((b) => {
+        b.classList.toggle("active", b.dataset.zoom === state.zoom);
+      });
+    }
+  }
+
   function wireControls() {
     document.getElementById("search").addEventListener("input", (e) => {
       state.search = e.target.value;
@@ -625,6 +837,10 @@
     });
     document.getElementById("hide-completed").addEventListener("change", (e) => {
       state.hideCompleted = e.target.checked;
+      render();
+    });
+    document.getElementById("overdue-only").addEventListener("change", (e) => {
+      state.showOverdueOnly = e.target.checked;
       render();
     });
     document.getElementById("vessel-select").addEventListener("change", (e) => {
@@ -657,6 +873,22 @@
         render();
       });
     });
+    document.getElementById("print-btn").addEventListener("click", () => {
+      window.print();
+    });
+    document.getElementById("availability-toggle").addEventListener("click", () => {
+      state.availabilityExpanded = !state.availabilityExpanded;
+      document.getElementById("availability-body").classList.toggle("collapsed", !state.availabilityExpanded);
+      const btn = document.getElementById("availability-toggle");
+      btn.textContent = state.availabilityExpanded ? "Hide" : "Show";
+      btn.setAttribute("aria-expanded", String(state.availabilityExpanded));
+    });
+    document.getElementById("extensions-toggle").addEventListener("click", () => {
+      state.extensionsExpanded = !state.extensionsExpanded;
+      document.getElementById("extensions-body").classList.toggle("collapsed", !state.extensionsExpanded);
+      document.getElementById("extensions-toggle").setAttribute("aria-expanded", String(state.extensionsExpanded));
+      renderExtensionsSummary();
+    });
 
     tooltipEl = document.createElement("div");
     tooltipEl.className = "tooltip";
@@ -677,9 +909,11 @@
         ? "Data as of " + generated.toLocaleString()
         : "";
       populateStatusFilter(state.tasks);
+      restoreStateFromUrl();
+
       const auto = computeAutoRange(state.tasks);
-      document.getElementById("range-from").value = formatDateInput(auto.start);
-      document.getElementById("range-to").value = formatDateInput(addDays(auto.end, -1));
+      document.getElementById("range-from").value = formatDateInput(state.dateFrom || auto.start);
+      document.getElementById("range-to").value = formatDateInput(state.dateTo || addDays(auto.end, -1));
       render();
     } catch (err) {
       root.innerHTML = "<p class='status-message'>Could not load schedule data: " + escapeHtml(err.message) + "</p>";
