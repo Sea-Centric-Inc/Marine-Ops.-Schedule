@@ -51,7 +51,10 @@ overwrite it with real data.
   range, and zoom level are kept in the URL, so you can copy/paste a link to
   a specific view.
 - **Print / Export PDF** - button in the header; use your browser's print
-  dialog to save as PDF.
+  dialog to save as PDF. Defaults to landscape, and the whole timeline is
+  automatically shrunk to fit one page width (independent of your on-screen
+  zoom level) so the entire chart shows in one continuous view instead of
+  being cut off horizontally.
 
 ## One-time setup
 

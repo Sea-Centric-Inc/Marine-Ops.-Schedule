@@ -662,6 +662,11 @@ body {
 .tooltip strong { display: block; margin-bottom: 4px; }
 .tooltip .tt-row { display: flex; justify-content: space-between; gap: 12px; }
 
+@page {
+  size: landscape;
+  margin: 10mm;
+}
+
 @media print {
   .no-print, .ext-row, .today-line, .tooltip {
     display: none !important;

@@ -28,7 +28,8 @@
     vessel: "",
     availabilityExpanded: false,
     extensionsExpanded: false,
-    extensions: {} // taskId -> { days: number, reason: string }, persisted to localStorage
+    extensions: {}, // taskId -> { days: number, reason: string }, persisted to localStorage
+    printFitWidth: null // set while printing so the whole timeline fits one page width
   };
 
   function loadExtensions() {
@@ -449,9 +450,17 @@
       return;
     }
 
-    const pxPerDay = ZOOM_PX_PER_DAY[state.zoom];
     const range = computeRange(tasks);
     const totalDays = daysBetween(range.start, range.end);
+
+    // Printing needs the whole timeline width to fit one page (no
+    // horizontal scrolling on paper), so shrink pxPerDay to fit instead of
+    // using the on-screen zoom level.
+    let pxPerDay = ZOOM_PX_PER_DAY[state.zoom];
+    if (state.printFitWidth) {
+      const availableTimelineWidth = Math.max(state.printFitWidth - LABEL_WIDTH - 20, 100);
+      pxPerDay = Math.max(availableTimelineWidth / totalDays, 0.5);
+    }
     const totalWidth = totalDays * pxPerDay;
 
     const scroll = document.createElement("div");
@@ -881,6 +890,18 @@
     document.body.appendChild(tooltipEl);
 
     populateVesselSelect();
+
+    // Shrink the whole timeline to fit one page width so printing/exporting
+    // captures the entire Gantt chart in a single view instead of cutting
+    // it off horizontally. Covers both the Print button and Ctrl+P.
+    window.addEventListener("beforeprint", () => {
+      state.printFitWidth = document.documentElement.clientWidth || window.innerWidth;
+      render();
+    });
+    window.addEventListener("afterprint", () => {
+      state.printFitWidth = null;
+      render();
+    });
   }
 
   async function init() {
