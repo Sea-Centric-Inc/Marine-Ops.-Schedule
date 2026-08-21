@@ -32,8 +32,7 @@ overwrite it with real data.
 ## Features
 
 - **Dual-bar Gantt** - dashed "Anticipated" bar and a solid, status-colored
-  "Actual" bar per task, plus small icons on the actual bar (in addition to
-  color) so status reads even for colorblind users.
+  "Actual" bar per task.
 - **Milestones** - a task whose start and end date are the same day renders
   as a diamond marker instead of an unreadable one-day sliver.
 - **Overdue banner** - always-visible alert (regardless of active filters)

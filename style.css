@@ -590,45 +590,13 @@ body {
   border: 1.5px dashed var(--planned-border);
 }
 
-.bar-actual {
-  border: none;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.bar-actual { border: none; }
 .bar-actual.status-complete { background: var(--status-complete); }
 .bar-actual.status-in-progress { background: var(--status-in-progress); }
 .bar-actual.status-active { background: var(--status-active); }
 .bar-actual.status-not-started { background: var(--status-not-started); }
 
-.bar-actual::before {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 8px;
-  line-height: 1;
-  pointer-events: none;
-}
-.bar-actual.status-complete::before { content: "\2713"; }
-.bar-actual.status-in-progress::before { content: "\2026"; }
-.bar-actual.status-active::before { content: "\25B6"; }
-.bar-actual.status-not-started::before { content: "\25CB"; }
-
-.bar-extension {
-  background: var(--status-extension);
-  border: none;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.bar-extension::before {
-  content: "+";
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  pointer-events: none;
-}
+.bar-extension { background: var(--status-extension); border: none; }
 
 .marker-diamond {
   position: absolute;
