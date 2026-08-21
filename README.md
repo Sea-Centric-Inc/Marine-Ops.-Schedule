@@ -29,6 +29,33 @@ Right now `data/gantt-data.json` contains sample data so you can see the chart
 working immediately. Once you wire up Smartsheet (below), the Action will
 overwrite it with real data.
 
+## Features
+
+- **Dual-bar Gantt** - dashed "Anticipated" bar and a solid, status-colored
+  "Actual" bar per task, plus small icons on the actual bar (in addition to
+  color) so status reads even for colorblind users.
+- **Milestones** - a task whose start and end date are the same day renders
+  as a diamond marker instead of an unreadable one-day sliver.
+- **Overdue banner** - always-visible alert (regardless of active filters)
+  listing any task whose anticipated end date has passed with no actual
+  completion recorded, plus an "Overdue only" filter.
+- **Search, status filter, hide-completed, date range** - the toolbar above
+  the chart; the date range also narrows what the Vessel Availability panel
+  considers.
+- **Vessel Availability** - pick a vessel, see its open date gaps and percent
+  utilization within the current date range.
+- **Extensions** - per-task checkbox to add extra days (with an optional
+  reason/requested-by note), shown as a purple bar segment on the chart and
+  factored into Vessel Availability. An **Active Extensions** panel lists
+  every task currently extended with a one-click remove. Extension data is
+  stored in your browser's local storage only - it does not sync to
+  Smartsheet, the repo, or other devices/teammates.
+- **Shareable links** - your current search, filters, vessel selection, date
+  range, and zoom level are kept in the URL, so you can copy/paste a link to
+  a specific view.
+- **Print / Export PDF** - button in the header; use your browser's print
+  dialog to save as PDF.
+
 ## One-time setup
 
 ### 1. Enable GitHub Pages
@@ -105,17 +132,6 @@ If you rename or add columns later, edit this file and commit to `main` -
 pushing a change to it automatically triggers a data refresh (see workflow
 triggers below).
 
-### Vessel Availability panel
-
-Below the date range picker, the **Vessel Availability** section lets you
-pick one of the five fixed vessels (`VESSELS` near the top of `app.js`) and
-see every open date gap for it within the currently selected date range - the
-spans where it has no anticipated or actual booking at all. For each task, it
-uses actual dates when known, an actual-start-to-anticipated-end estimate for
-work that's begun but has no recorded end yet, or the anticipated dates for
-bookings that haven't started. To add, rename, or remove a vessel, edit the
-`VESSELS` array in `app.js`.
-
 ### 6. Run the sync once
 
 Repo **Actions** tab → **Update Gantt Data** → **Run workflow**. After it
@@ -125,6 +141,13 @@ site will pick it up automatically.
 After that, it runs automatically every 30 minutes. Adjust the cron schedule
 in [`.github/workflows/update-data.yml`](.github/workflows/update-data.yml) if
 you want it more or less frequent.
+
+### Customizing the vessel list
+
+The Vessel Availability and gap calculations use a fixed list of vessels
+(`VESSELS` near the top of [`app.js`](app.js)) rather than deriving them from
+the data, so a vessel with zero current tasks still shows up as "fully
+available." Edit that array to add, rename, or remove a vessel.
 
 ## Local development
 
