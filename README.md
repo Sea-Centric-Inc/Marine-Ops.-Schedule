@@ -33,8 +33,6 @@ overwrite it with real data.
 
 - **Dual-bar Gantt** - dashed "Anticipated" bar and a solid, status-colored
   "Actual" bar per task.
-- **Milestones** - a task whose start and end date are the same day renders
-  as a diamond marker instead of an unreadable one-day sliver.
 - **Overdue banner** - always-visible alert (regardless of active filters)
   listing any task whose anticipated end date has passed with no actual
   completion recorded, plus an "Overdue only" filter.

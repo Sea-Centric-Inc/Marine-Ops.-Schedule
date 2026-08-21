@@ -242,14 +242,6 @@ body {
   background: var(--today-line);
 }
 
-.marker-diamond-legend {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  background: var(--text-muted);
-  transform: rotate(45deg);
-}
-
 .overdue-banner {
   background: var(--overdue-bg);
   border-bottom: 1px solid var(--overdue-border);
@@ -597,22 +589,6 @@ body {
 .bar-actual.status-not-started { background: var(--status-not-started); }
 
 .bar-extension { background: var(--status-extension); border: none; }
-
-.marker-diamond {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  transform: rotate(45deg);
-  border-radius: 2px;
-}
-.marker-diamond.marker-planned {
-  background: var(--planned-fill);
-  border: 1.5px dashed var(--planned-border);
-}
-.marker-diamond.status-complete { background: var(--status-complete); }
-.marker-diamond.status-in-progress { background: var(--status-in-progress); }
-.marker-diamond.status-active { background: var(--status-active); }
-.marker-diamond.status-not-started { background: var(--status-not-started); }
 
 .bar-percent {
   position: absolute;

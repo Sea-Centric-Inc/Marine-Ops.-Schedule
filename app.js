@@ -506,43 +506,29 @@
       const actualEnd = parseDate(task.actualEnd);
 
       if (plannedStart && plannedEnd) {
-        const x = daysBetween(range.start, plannedStart) * pxPerDay;
-        const el = document.createElement("div");
-        if (daysBetween(plannedStart, plannedEnd) === 0) {
-          el.className = "marker-diamond marker-planned";
-          el.style.left = (x - 5) + "px";
-          el.style.top = "27px";
-        } else {
-          el.className = "bar bar-planned";
-          el.style.left = x + "px";
-          el.style.width = Math.max(daysBetween(plannedStart, plannedEnd) * pxPerDay, 3) + "px";
-          el.style.top = "27px";
-          el.style.height = "11px";
-        }
-        el.addEventListener("mousemove", (e) => showTooltip(e, task, status));
-        el.addEventListener("mouseleave", hideTooltip);
-        timeline.appendChild(el);
+        const bar = document.createElement("div");
+        bar.className = "bar bar-planned";
+        bar.style.left = daysBetween(range.start, plannedStart) * pxPerDay + "px";
+        bar.style.width = Math.max(daysBetween(plannedStart, plannedEnd) * pxPerDay, 3) + "px";
+        bar.style.top = "27px";
+        bar.style.height = "11px";
+        bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
+        bar.addEventListener("mouseleave", hideTooltip);
+        timeline.appendChild(bar);
       }
 
       let extensionAnchor = null; // { date, top } - where the extension bar continues from
 
       if (actualStart && actualEnd) {
-        const x = daysBetween(range.start, actualStart) * pxPerDay;
-        const el = document.createElement("div");
-        if (daysBetween(actualStart, actualEnd) === 0) {
-          el.className = "marker-diamond status-" + status;
-          el.style.left = (x - 5) + "px";
-          el.style.top = "46px";
-        } else {
-          el.className = "bar bar-actual status-" + status;
-          el.style.left = x + "px";
-          el.style.width = Math.max(daysBetween(actualStart, actualEnd) * pxPerDay, 3) + "px";
-          el.style.top = "46px";
-          el.style.height = "11px";
-        }
-        el.addEventListener("mousemove", (e) => showTooltip(e, task, status));
-        el.addEventListener("mouseleave", hideTooltip);
-        timeline.appendChild(el);
+        const bar = document.createElement("div");
+        bar.className = "bar bar-actual status-" + status;
+        bar.style.left = daysBetween(range.start, actualStart) * pxPerDay + "px";
+        bar.style.width = Math.max(daysBetween(actualStart, actualEnd) * pxPerDay, 3) + "px";
+        bar.style.top = "46px";
+        bar.style.height = "11px";
+        bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
+        bar.addEventListener("mouseleave", hideTooltip);
+        timeline.appendChild(bar);
         extensionAnchor = { date: actualEnd, top: "46px" };
       } else if (actualStart && !actualEnd) {
         // in-progress: draw from actual start to today
