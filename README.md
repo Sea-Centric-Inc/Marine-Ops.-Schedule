@@ -36,7 +36,8 @@ overwrite it with real data.
   (opens in a new tab) wherever a permalink was available from the sync.
 - **Overdue banner** - always-visible alert (regardless of active filters)
   listing any task whose anticipated end date has passed with no actual
-  completion recorded, plus an "Overdue only" filter.
+  completion recorded, plus an "Overdue only" filter. The list itself is
+  collapsible (starts expanded) via the Hide/Show button in its header.
 - **Search, status filter, hide-completed, date range** - the toolbar above
   the chart; the date range also narrows what the Vessel Availability panel
   considers.

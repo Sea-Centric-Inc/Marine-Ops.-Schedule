@@ -28,6 +28,7 @@
     vessel: "",
     availabilityExpanded: false,
     extensionsExpanded: false,
+    overdueExpanded: true,
     extensions: {}, // taskId -> { days: number, reason: string }, persisted to localStorage
     printFitWidth: null // set while printing so the whole timeline fits one page width
   };
@@ -616,6 +617,7 @@
     banner.hidden = false;
     title.textContent = "⚠ " + overdueTasks.length + " task" + (overdueTasks.length === 1 ? "" : "s") +
       " overdue – anticipated end date passed with no actual completion recorded.";
+    list.classList.toggle("collapsed", !state.overdueExpanded);
 
     list.innerHTML = "";
     overdueTasks
@@ -892,6 +894,13 @@
     });
     document.getElementById("print-btn").addEventListener("click", () => {
       window.print();
+    });
+    document.getElementById("overdue-toggle").addEventListener("click", () => {
+      state.overdueExpanded = !state.overdueExpanded;
+      document.getElementById("overdue-list").classList.toggle("collapsed", !state.overdueExpanded);
+      const btn = document.getElementById("overdue-toggle");
+      btn.textContent = state.overdueExpanded ? "Hide" : "Show";
+      btn.setAttribute("aria-expanded", String(state.overdueExpanded));
     });
     document.getElementById("availability-toggle").addEventListener("click", () => {
       state.availabilityExpanded = !state.availabilityExpanded;

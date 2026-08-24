@@ -275,6 +275,10 @@ body {
   gap: 4px;
 }
 
+.overdue-list.collapsed {
+  display: none;
+}
+
 .overdue-list li {
   font-size: 0.82rem;
   color: var(--text);
