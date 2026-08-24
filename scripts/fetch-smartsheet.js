@@ -145,6 +145,10 @@ async function main() {
     tasks
   };
 
+  if (tasks.length && !tasks.some((t) => t.link)) {
+    console.warn("WARNING: none of the fetched rows had a permalink. Row links on the chart won't work. Check that this Smartsheet account/API supports ?include=rowPermalink.");
+  }
+
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2) + "\n");
   console.log("Wrote " + tasks.length + " task(s) from \"" + output.sheetName + "\" to " + path.relative(process.cwd(), OUTPUT_PATH));
 }
