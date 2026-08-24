@@ -3,9 +3,15 @@
 
   const DATA_URL = "data/gantt-data.json";
   const EXTENSIONS_KEY = "marineOpsExtensions_v1";
+  const EDIT_PIN_KEY = "marineOpsEditPin_v1";
   const ROW_HEIGHT = 84;
   const LABEL_WIDTH = 320;
   const ZOOM_PX_PER_DAY = { day: 36, week: 14, month: 5 };
+
+  // URL of the Cloudflare Worker that writes date edits back to Smartsheet
+  // (see cloudflare-worker/ + README for setup). Leave blank to disable
+  // date editing entirely - the edit button just won't be shown.
+  const EDIT_API_URL = "";
 
   // Project Status is one of: Not Started, Planning Phase, Active, Complete.
   // Color is a direct 1:1 mapping from that text; anything blank/unrecognized
@@ -399,6 +405,75 @@
     return extRow;
   }
 
+  let editingTaskId = null;
+
+  function openEditDatesModal(task) {
+    editingTaskId = task.id;
+    document.getElementById("edit-dates-subtitle").textContent = task.name;
+    document.getElementById("edit-planned-start").value = task.plannedStart || "";
+    document.getElementById("edit-planned-end").value = task.plannedEnd || "";
+    document.getElementById("edit-actual-start").value = task.actualStart || "";
+    document.getElementById("edit-actual-end").value = task.actualEnd || "";
+    const pinInput = document.getElementById("edit-pin");
+    pinInput.value = sessionStorage.getItem(EDIT_PIN_KEY) || "";
+    const errorEl = document.getElementById("edit-dates-error");
+    errorEl.hidden = true;
+    errorEl.textContent = "";
+    document.getElementById("edit-dates-modal").hidden = false;
+  }
+
+  function closeEditDatesModal() {
+    document.getElementById("edit-dates-modal").hidden = true;
+    editingTaskId = null;
+  }
+
+  async function saveEditDatesModal() {
+    const task = state.tasks.find((t) => t.id === editingTaskId);
+    if (!task) { closeEditDatesModal(); return; }
+
+    const pin = document.getElementById("edit-pin").value;
+    const fields = {
+      plannedStart: document.getElementById("edit-planned-start").value,
+      plannedEnd: document.getElementById("edit-planned-end").value,
+      actualStart: document.getElementById("edit-actual-start").value,
+      actualEnd: document.getElementById("edit-actual-end").value
+    };
+
+    const errorEl = document.getElementById("edit-dates-error");
+    const saveBtn = document.getElementById("edit-dates-save");
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving…";
+
+    try {
+      const res = await fetch(EDIT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rowId: task.id, pin, fields })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error((data && data.error) || ("Request failed (" + res.status + ")"));
+      }
+
+      try { sessionStorage.setItem(EDIT_PIN_KEY, pin); } catch (e) { /* ignore */ }
+
+      task.plannedStart = fields.plannedStart;
+      task.plannedEnd = fields.plannedEnd;
+      task.actualStart = fields.actualStart;
+      task.actualEnd = fields.actualEnd;
+
+      closeEditDatesModal();
+      render();
+    } catch (err) {
+      errorEl.textContent = err.message || "Could not save. Try again.";
+      errorEl.hidden = false;
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save to Smartsheet";
+    }
+  }
+
   function positionTooltip(evt) {
     if (!tooltipEl) return;
     const pad = 14;
@@ -511,6 +586,19 @@
       label.appendChild(nameEl);
       label.appendChild(metaEl);
       label.appendChild(buildExtensionRow(task));
+
+      if (EDIT_API_URL) {
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "row-edit-btn no-print";
+        editBtn.textContent = "Edit";
+        editBtn.title = "Edit dates (writes back to Smartsheet)";
+        editBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openEditDatesModal(task);
+        });
+        label.appendChild(editBtn);
+      }
 
       const timeline = document.createElement("div");
       timeline.className = "row-timeline";
@@ -915,6 +1003,17 @@
       document.getElementById("extensions-toggle").setAttribute("aria-expanded", String(state.extensionsExpanded));
       renderExtensionsSummary();
     });
+
+    if (EDIT_API_URL) {
+      document.getElementById("edit-dates-cancel").addEventListener("click", closeEditDatesModal);
+      document.getElementById("edit-dates-save").addEventListener("click", saveEditDatesModal);
+      document.getElementById("edit-dates-modal").addEventListener("click", (e) => {
+        if (e.target.id === "edit-dates-modal") closeEditDatesModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !document.getElementById("edit-dates-modal").hidden) closeEditDatesModal();
+      });
+    }
 
     tooltipEl = document.createElement("div");
     tooltipEl.className = "tooltip";

@@ -1,0 +1,19 @@
+name = "marine-ops-edit-proxy"
+main = "edit-proxy.js"
+compatibility_date = "2024-11-01"
+
+# Non-secret config - safe to commit and edit directly.
+[vars]
+SHEET_ID = "PUT_YOUR_SHEET_ID_HERE"
+CONFIG_URL = "https://PUT_YOUR_GITHUB_USERNAME_HERE.github.io/Marine-Operations/config/smartsheet-map.json"
+ALLOWED_ORIGIN = "https://PUT_YOUR_GITHUB_USERNAME_HERE.github.io"
+
+# Secrets - do NOT put these here. Set them with:
+#   wrangler secret put SMARTSHEET_ACCESS_TOKEN
+#   wrangler secret put EDIT_PIN
+# (or via the Cloudflare dashboard: Worker -> Settings -> Variables and Secrets)
+#
+# Optional - if both are set, a successful edit also triggers an immediate
+# GitHub Action sync instead of waiting up to 30 minutes for the next one:
+#   wrangler secret put GITHUB_DISPATCH_TOKEN   (a GitHub PAT with "repo" + "workflow" scope)
+#   wrangler secret put GITHUB_REPO             (e.g. "stephensquires329-dotcom/Marine-Operations")

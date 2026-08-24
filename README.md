@@ -62,6 +62,11 @@ overwrite it with real data.
 - **Commercial Entry link** - header button opening the Smartsheet intake
   form in a new tab. Edit the `href` on that link in `index.html` if the
   form URL ever changes.
+- **Edit dates from the site** (optional, off by default) - a small "Edit"
+  button on each row opens a dialog to change its four dates, protected by a
+  shared PIN, writing straight back to Smartsheet through a Cloudflare
+  Worker. See [Editing dates from the site](#editing-dates-from-the-site-optional)
+  below to turn it on.
 
 ## One-time setup
 
@@ -155,6 +160,93 @@ The Vessel Availability and gap calculations use a fixed list of vessels
 (`VESSELS` near the top of [`app.js`](app.js)) rather than deriving them from
 the data, so a vessel with zero current tasks still shows up as "fully
 available." Edit that array to add, rename, or remove a vessel.
+
+## Editing dates from the site (optional)
+
+By default the site only ever *reads* from Smartsheet. Turning this on lets
+anyone with a shared PIN edit a task's four dates directly on the chart, and
+have that write straight back to the source row in Smartsheet.
+
+**Why this needs a separate piece of infrastructure:** editing Smartsheet
+requires a write-capable API token. That token can never be embedded in the
+website's JavaScript - anyone who opened their browser's dev tools would be
+able to read it out and use it to read or edit anything in your Smartsheet
+account. So the token has to live somewhere that isn't the browser: a small
+serverless function (a [Cloudflare Worker](https://workers.cloudflare.com/))
+that receives edit requests from the site, checks a PIN, and is the only
+thing that ever holds the token. [`cloudflare-worker/edit-proxy.js`](cloudflare-worker/edit-proxy.js)
+is that function - it only accepts writes to the four date fields, checks the
+PIN on every request, and does nothing else.
+
+**Be honest with yourself about what the PIN does and doesn't protect against.**
+It's one shared secret, not individual logins - anyone who has it (or guesses
+it) can edit dates until you rotate it. That's a reasonable tradeoff for a
+small internal team tool, not something to expose broadly. Pick a PIN that
+isn't trivial to guess, and treat it like a shared password.
+
+### 1. Create the Worker
+
+You'll need a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
+Once signed in:
+
+1. **Workers & Pages** → **Create** → **Create Worker**. Give it a name (e.g.
+   `marine-ops-edit-proxy`) and deploy the default "Hello World" starter -
+   you'll replace the code next.
+2. Open the Worker → **Edit code** (the "Quick Edit" web editor). Delete the
+   placeholder code and paste in the full contents of
+   [`cloudflare-worker/edit-proxy.js`](cloudflare-worker/edit-proxy.js). Save
+   and deploy.
+   - Prefer the command line? `cloudflare-worker/wrangler.toml` is set up
+     for `npx wrangler deploy` from that folder instead - either path ends
+     up with the same Worker.
+
+### 2. Set its configuration
+
+Worker → **Settings** → **Variables and Secrets**. Add:
+
+| Name | Type | Value |
+|---|---|---|
+| `SMARTSHEET_ACCESS_TOKEN` | Secret | A Smartsheet API token with edit access - generate a **new, separate** one for this (Smartsheet → avatar → Apps & Integrations → API Access). Don't reuse the GitHub Action's token. |
+| `EDIT_PIN` | Secret | A PIN/passphrase you choose. This is what the site will ask for before saving an edit. |
+| `SHEET_ID` | Plaintext | Same Sheet ID used in the GitHub secret setup above. |
+| `CONFIG_URL` | Plaintext | `https://stephensquires329-dotcom.github.io/Marine-Operations/config/smartsheet-map.json` |
+| `ALLOWED_ORIGIN` | Plaintext | `https://stephensquires329-dotcom.github.io` |
+
+Optional - only add these if you want an edit to show up on the live site
+within about a minute instead of waiting for the next scheduled sync:
+
+| Name | Type | Value |
+|---|---|---|
+| `GITHUB_DISPATCH_TOKEN` | Secret | A GitHub [personal access token](https://github.com/settings/tokens) with `repo` + `workflow` scope. |
+| `GITHUB_REPO` | Plaintext | `stephensquires329-dotcom/Marine-Operations` |
+
+Save. Your Worker now has a public URL like
+`https://marine-ops-edit-proxy.<your-subdomain>.workers.dev` - copy it.
+
+### 3. Point the site at the Worker
+
+Edit the `EDIT_API_URL` constant near the top of [`app.js`](app.js):
+
+```js
+const EDIT_API_URL = "https://marine-ops-edit-proxy.<your-subdomain>.workers.dev";
+```
+
+Commit and push to `main`. The Pages site will redeploy, and an "Edit"
+button will appear in the corner of every task row. Leave `EDIT_API_URL`
+blank at any time to turn the whole feature back off - the button just
+won't render.
+
+### How an edit flows
+
+1. Click **Edit** on a row → a dialog opens with its four dates and a PIN field.
+2. Change dates, enter the PIN, **Save to Smartsheet**.
+3. The site POSTs `{ rowId, pin, fields }` to the Worker. The Worker checks
+   the PIN, resolves the date columns from your live `config/smartsheet-map.json`,
+   and writes only those cells to that one row in Smartsheet.
+4. On success, your current browser tab updates immediately (it doesn't wait
+   for a sync). Everyone else sees the change once `data/gantt-data.json`
+   next refreshes - within about a minute if you set up the optional GitHub
+   dispatch above, otherwise on the normal 30-minute schedule.
 
 ## Local development
 
