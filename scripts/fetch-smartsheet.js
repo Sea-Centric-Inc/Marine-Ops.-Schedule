@@ -66,7 +66,7 @@ async function main() {
     fieldToTitle[key] = rawMap[key];
   });
 
-  const url = "https://api.smartsheet.com/2.0/sheets/" + encodeURIComponent(SHEET_ID);
+  const url = "https://api.smartsheet.com/2.0/sheets/" + encodeURIComponent(SHEET_ID) + "?include=rowPermalink";
   const res = await fetch(url, {
     headers: { Authorization: "Bearer " + TOKEN }
   });
@@ -126,7 +126,8 @@ async function main() {
       plannedEnd: toDateString(get("plannedEnd")),
       actualStart: toDateString(get("actualStart")),
       actualEnd: toDateString(get("actualEnd")),
-      status: String(get("status") || "")
+      status: String(get("status") || ""),
+      link: row.permalink || ""
     };
     if ((columnIdsByField.percentComplete || []).length) {
       task.percentComplete = toPercent(get("percentComplete"));

@@ -32,7 +32,8 @@ overwrite it with real data.
 ## Features
 
 - **Dual-bar Gantt** - dashed "Anticipated" bar and a solid, status-colored
-  "Actual" bar per task.
+  "Actual" bar per task. Task names link directly to that row in Smartsheet
+  (opens in a new tab) wherever a permalink was available from the sync.
 - **Overdue banner** - always-visible alert (regardless of active filters)
   listing any task whose anticipated end date has passed with no actual
   completion recorded, plus an "Overdue only" filter.
@@ -40,7 +41,9 @@ overwrite it with real data.
   the chart; the date range also narrows what the Vessel Availability panel
   considers.
 - **Vessel Availability** - pick a vessel, see its open date gaps and percent
-  utilization within the current date range.
+  utilization within the current date range. Its rows are also highlighted
+  (accent left border + tinted background) in the main chart below, so you
+  can see exactly which bars the gaps correspond to.
 - **Extensions** - per-task checkbox to add extra days (with an optional
   reason/requested-by note), shown as a purple bar segment on the chart and
   factored into Vessel Availability. An **Active Extensions** panel lists
@@ -180,11 +183,17 @@ python -m http.server 8000         # or any static file server
       "actualEnd": "2026-08-02",
       "percentComplete": 100,
       "assignedTo": "Deck Crew A",
-      "status": "Delayed"
+      "status": "Delayed",
+      "link": "https://app.smartsheet.com/sheets/...?rowId=..."
     }
   ]
 }
 ```
+
+`link` is the row's Smartsheet permalink, fetched in bulk via `?include=rowPermalink` on
+the sheet request - no extra API call per row. The chart uses it to make each task name
+open that row directly in Smartsheet. If a row has no permalink for some reason, the
+task name just renders as plain text instead of a link.
 
 ## Extending this into a fuller dashboard
 

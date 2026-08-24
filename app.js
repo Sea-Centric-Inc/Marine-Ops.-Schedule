@@ -484,13 +484,20 @@
     visibleTasks.forEach((task) => {
       const row = document.createElement("div");
       row.className = "gantt-row";
+      if (state.vessel && getVessel(task) === state.vessel) row.classList.add("vessel-highlight");
       row.style.height = ROW_HEIGHT + "px";
 
       const label = document.createElement("div");
       label.className = "row-label";
       const status = statusSlug(task.status);
-      const nameEl = document.createElement("div");
+      const nameEl = document.createElement(task.link ? "a" : "div");
       nameEl.className = "task-name";
+      if (task.link) {
+        nameEl.href = task.link;
+        nameEl.target = "_blank";
+        nameEl.rel = "noopener noreferrer";
+        nameEl.title = "Open this row in Smartsheet";
+      }
       nameEl.textContent = task.name;
       const metaEl = document.createElement("div");
       metaEl.className = "task-meta";
@@ -618,7 +625,16 @@
         const plannedEnd = parseDate(t.plannedEnd);
         const daysLate = daysBetween(plannedEnd, todayUTC());
         const li = document.createElement("li");
-        li.textContent = t.name + " — anticipated end " + formatDate(plannedEnd);
+        const nameNode = t.link ? document.createElement("a") : document.createElement("span");
+        if (t.link) {
+          nameNode.href = t.link;
+          nameNode.target = "_blank";
+          nameNode.rel = "noopener noreferrer";
+          nameNode.title = "Open this row in Smartsheet";
+        }
+        nameNode.textContent = t.name;
+        li.appendChild(nameNode);
+        li.appendChild(document.createTextNode(" — anticipated end " + formatDate(plannedEnd)));
         const daysSpan = document.createElement("span");
         daysSpan.className = "overdue-days";
         daysSpan.textContent = daysLate + "d late";
@@ -648,8 +664,14 @@
       item.className = "ext-summary-item";
 
       const info = document.createElement("div");
-      const nameEl = document.createElement("div");
+      const nameEl = document.createElement(task.link ? "a" : "div");
       nameEl.className = "ext-summary-name";
+      if (task.link) {
+        nameEl.href = task.link;
+        nameEl.target = "_blank";
+        nameEl.rel = "noopener noreferrer";
+        nameEl.title = "Open this row in Smartsheet";
+      }
       nameEl.textContent = task.name;
       const detailEl = document.createElement("div");
       detailEl.className = "ext-summary-detail";
