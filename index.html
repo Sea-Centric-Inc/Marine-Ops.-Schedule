@@ -106,44 +106,6 @@
   <p class="status-message" id="status-message">Loading schedule data&hellip;</p>
 </main>
 
-<div id="edit-dates-modal" class="modal-overlay no-print" hidden>
-  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-dates-title">
-    <h3 id="edit-dates-title">Edit dates</h3>
-    <p id="edit-dates-subtitle" class="modal-subtitle"></p>
-
-    <div class="modal-field">
-      <label for="edit-planned-start">Anticipated Start</label>
-      <input id="edit-planned-start" type="date" />
-    </div>
-    <div class="modal-field">
-      <label for="edit-planned-end">Anticipated End</label>
-      <input id="edit-planned-end" type="date" />
-    </div>
-    <div class="modal-field">
-      <label for="edit-actual-start">Actual Start</label>
-      <input id="edit-actual-start" type="date" />
-    </div>
-    <div class="modal-field">
-      <label for="edit-actual-end">Actual End</label>
-      <input id="edit-actual-end" type="date" />
-    </div>
-    <div class="modal-field">
-      <label for="edit-pin">PIN</label>
-      <input id="edit-pin" type="password" autocomplete="off" />
-    </div>
-
-    <p class="modal-subtitle">Writes directly to Smartsheet. This browser tab updates
-      immediately; other viewers see it after the next sync.</p>
-
-    <p id="edit-dates-error" class="modal-error" hidden></p>
-
-    <div class="modal-actions">
-      <button id="edit-dates-cancel" type="button" class="text-button">Cancel</button>
-      <button id="edit-dates-save" type="button" class="primary-button">Save to Smartsheet</button>
-    </div>
-  </div>
-</div>
-
 <footer class="app-footer no-print">
   <p>Data source: Smartsheet, synced via GitHub Actions. See <a href="https://github.com/stephensquires329-dotcom/Marine-Operations#readme">README</a> for setup.</p>
   <p>Extension days and reasons (below) are saved in this browser only &ndash; they don't sync across devices or teammates.</p>
