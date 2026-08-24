@@ -401,8 +401,8 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: auto;
-  max-height: 74vh;
+  overflow-x: auto;
+  overflow-y: visible;
   position: relative;
 }
 
