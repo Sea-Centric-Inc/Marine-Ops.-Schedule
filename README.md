@@ -55,6 +55,9 @@ overwrite it with real data.
   automatically shrunk to fit one page width (independent of your on-screen
   zoom level) so the entire chart shows in one continuous view instead of
   being cut off horizontally.
+- **Commercial Entry link** - header button opening the Smartsheet intake
+  form in a new tab. Edit the `href` on that link in `index.html` if the
+  form URL ever changes.
 
 ## One-time setup
 
