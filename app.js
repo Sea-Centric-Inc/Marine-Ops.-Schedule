@@ -22,13 +22,11 @@
     search: "",
     statusFilter: "",
     hideCompleted: false,
-    showOverdueOnly: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
     dateTo: null,
     vessel: "",
     availabilityExpanded: false,
     extensionsExpanded: false,
-    overdueExpanded: true,
     extensions: {}, // taskId -> { days: number, reason: string }, persisted to localStorage
     printFitWidth: null // set while printing so the whole timeline fits one page width
   };
@@ -187,17 +185,6 @@
     return days > 0 ? { start: interval.start, end: addDays(interval.end, days) } : interval;
   }
 
-  // A task is overdue when its anticipated end date (extended, if an
-  // extension is set) has passed with no actual completion recorded.
-  function isOverdue(task) {
-    const plannedEnd = parseDate(task.plannedEnd);
-    if (!plannedEnd) return false;
-    if (parseDate(task.actualEnd)) return false;
-    const days = extensionDays(task);
-    const effectiveEnd = days > 0 ? addDays(plannedEnd, days) : plannedEnd;
-    return effectiveEnd < todayUTC();
-  }
-
   function mergeIntervals(intervals) {
     const sorted = intervals.slice().sort((a, b) => a.start - b.start);
     const merged = [];
@@ -335,8 +322,7 @@
         ? "<div class='tt-row'><span>Extension</span><span>+" + extDays + "d, through " + formatDate(addDays(extAnchor, extDays)) + "</span></div>"
         : "") +
       (extDays > 0 && extEntry && extEntry.reason
-        ? "<div class='tt-row'><span>Reason</span><span>" + escapeHtml(extEntry.reason) + "</span></div>" : "") +
-      (isOverdue(task) ? "<div class='tt-row'><span>&#9888;</span><span>Overdue</span></div>" : "");
+        ? "<div class='tt-row'><span>Reason</span><span>" + escapeHtml(extEntry.reason) + "</span></div>" : "");
     tooltipEl.style.display = "block";
     positionTooltip(evt);
   }
@@ -430,7 +416,6 @@
     const slug = statusSlug(task.status);
     if (state.statusFilter && slug !== state.statusFilter) return false;
     if (state.hideCompleted && slug === "complete") return false;
-    if (state.showOverdueOnly && !isOverdue(task)) return false;
 
     if (state.dateFrom && state.dateTo) {
       const extent = taskDateExtent(task);
@@ -441,8 +426,6 @@
   }
 
   function render() {
-    renderOverdueBanner();
-
     root.innerHTML = "";
     const tasks = state.tasks;
     if (!tasks.length) {
@@ -506,7 +489,6 @@
       if (task.assignedTo) metaParts.push(task.assignedTo);
       metaParts.push(displayStatusText(task, status));
       if (task.percentComplete !== undefined && task.percentComplete !== null) metaParts.push(task.percentComplete + "%");
-      if (isOverdue(task)) metaParts.push("overdue");
       metaEl.textContent = metaParts.join(" • ");
       label.appendChild(nameEl);
       label.appendChild(metaEl);
@@ -601,48 +583,6 @@
     renderVesselAvailability(range);
     renderExtensionsSummary();
     updateUrlFromState();
-  }
-
-  function renderOverdueBanner() {
-    const banner = document.getElementById("overdue-banner");
-    const title = document.getElementById("overdue-banner-title");
-    const list = document.getElementById("overdue-list");
-    const overdueTasks = state.tasks.filter(isOverdue);
-
-    if (!overdueTasks.length) {
-      banner.hidden = true;
-      return;
-    }
-
-    banner.hidden = false;
-    title.textContent = "⚠ " + overdueTasks.length + " task" + (overdueTasks.length === 1 ? "" : "s") +
-      " overdue – anticipated end date passed with no actual completion recorded.";
-    list.classList.toggle("collapsed", !state.overdueExpanded);
-
-    list.innerHTML = "";
-    overdueTasks
-      .slice()
-      .sort((a, b) => parseDate(a.plannedEnd) - parseDate(b.plannedEnd))
-      .forEach((t) => {
-        const plannedEnd = parseDate(t.plannedEnd);
-        const daysLate = daysBetween(plannedEnd, todayUTC());
-        const li = document.createElement("li");
-        const nameNode = t.link ? document.createElement("a") : document.createElement("span");
-        if (t.link) {
-          nameNode.href = t.link;
-          nameNode.target = "_blank";
-          nameNode.rel = "noopener noreferrer";
-          nameNode.title = "Open this row in Smartsheet";
-        }
-        nameNode.textContent = t.name;
-        li.appendChild(nameNode);
-        li.appendChild(document.createTextNode(" — anticipated end " + formatDate(plannedEnd)));
-        const daysSpan = document.createElement("span");
-        daysSpan.className = "overdue-days";
-        daysSpan.textContent = daysLate + "d late";
-        li.appendChild(daysSpan);
-        list.appendChild(li);
-      });
   }
 
   function renderExtensionsSummary() {
@@ -785,7 +725,6 @@
     if (state.search) params.set("q", state.search);
     if (state.statusFilter) params.set("status", state.statusFilter);
     if (state.hideCompleted) params.set("hideCompleted", "1");
-    if (state.showOverdueOnly) params.set("overdue", "1");
     if (state.vessel) params.set("vessel", state.vessel);
     if (state.dateFrom) params.set("from", formatDateInput(state.dateFrom));
     if (state.dateTo) params.set("to", formatDateInput(state.dateTo));
@@ -809,10 +748,6 @@
     if (params.get("hideCompleted") === "1") {
       state.hideCompleted = true;
       document.getElementById("hide-completed").checked = true;
-    }
-    if (params.get("overdue") === "1") {
-      state.showOverdueOnly = true;
-      document.getElementById("overdue-only").checked = true;
     }
     if (params.has("vessel")) {
       const vesselSelect = document.getElementById("vessel-select");
@@ -858,10 +793,6 @@
       state.hideCompleted = e.target.checked;
       render();
     });
-    document.getElementById("overdue-only").addEventListener("change", (e) => {
-      state.showOverdueOnly = e.target.checked;
-      render();
-    });
     document.getElementById("vessel-select").addEventListener("change", (e) => {
       state.vessel = e.target.value;
       render();
@@ -894,13 +825,6 @@
     });
     document.getElementById("print-btn").addEventListener("click", () => {
       window.print();
-    });
-    document.getElementById("overdue-toggle").addEventListener("click", () => {
-      state.overdueExpanded = !state.overdueExpanded;
-      document.getElementById("overdue-list").classList.toggle("collapsed", !state.overdueExpanded);
-      const btn = document.getElementById("overdue-toggle");
-      btn.textContent = state.overdueExpanded ? "Hide" : "Show";
-      btn.setAttribute("aria-expanded", String(state.overdueExpanded));
     });
     document.getElementById("availability-toggle").addEventListener("click", () => {
       state.availabilityExpanded = !state.availabilityExpanded;

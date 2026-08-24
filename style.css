@@ -21,9 +21,6 @@
   --status-not-started: #d1332f;
   --status-extension: #8457e0;
 
-  --overdue-bg: #fdecea;
-  --overdue-border: #d1332f;
-
   --vessel-highlight-bg: rgba(31, 111, 235, 0.08);
 }
 
@@ -48,9 +45,6 @@
     --status-active: #e0b64a;
     --status-not-started: #ff6b66;
     --status-extension: #a98bff;
-
-    --overdue-bg: #3a1f1e;
-    --overdue-border: #ff6b66;
 
     --vessel-highlight-bg: rgba(77, 155, 255, 0.14);
   }
@@ -248,50 +242,6 @@ body {
   background: var(--today-line);
 }
 
-.overdue-banner {
-  background: var(--overdue-bg);
-  border-bottom: 1px solid var(--overdue-border);
-  padding: 10px 24px;
-}
-
-.overdue-banner-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.overdue-banner-header strong {
-  font-size: 0.88rem;
-  color: var(--text);
-}
-
-.overdue-list {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.overdue-list.collapsed {
-  display: none;
-}
-
-.overdue-list li {
-  font-size: 0.82rem;
-  color: var(--text);
-  padding: 4px 0;
-  border-top: 1px solid rgba(128, 128, 128, 0.2);
-}
-
-.overdue-list li .overdue-days {
-  color: var(--overdue-border);
-  font-weight: 600;
-  margin-left: 6px;
-}
-
 .panel-toggle {
   margin-left: auto;
 }
@@ -479,11 +429,11 @@ body {
   text-decoration: none;
 }
 
-.task-name, .ext-summary-name, .overdue-list li a {
+.task-name, .ext-summary-name {
   color: inherit;
   text-decoration: none;
 }
-a.task-name:hover, a.ext-summary-name:hover, .overdue-list li a:hover {
+a.task-name:hover, a.ext-summary-name:hover {
   text-decoration: underline;
   color: var(--accent);
 }
