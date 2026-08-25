@@ -27,7 +27,7 @@
     vessel: "",
     availabilityExpanded: false,
     extensionsExpanded: false,
-    extensions: {}, // taskId -> { days: number, reason: string }, persisted to localStorage
+    extensions: {}, // taskId -> { start: string, end: string, reason: string }, persisted to localStorage
     printFitWidth: null // set while printing so the whole timeline fits one page width
   };
 
@@ -109,16 +109,17 @@
   function computeAutoRange(tasks) {
     let min = null, max = null;
     tasks.forEach((t) => {
-      let taskMax = null;
       [t.plannedStart, t.plannedEnd, t.actualStart, t.actualEnd].forEach((v) => {
         const d = parseDate(v);
         if (!d) return;
         if (!min || d < min) min = d;
-        if (!taskMax || d > taskMax) taskMax = d;
+        if (!max || d > max) max = d;
       });
-      const days = extensionDays(t);
-      if (taskMax && days > 0) taskMax = addDays(taskMax, days);
-      if (taskMax && (!max || taskMax > max)) max = taskMax;
+      const ext = getExtensionRange(t);
+      if (ext) {
+        if (!min || ext.start < min) min = ext.start;
+        if (!max || ext.end > max) max = ext.end;
+      }
     });
     const today = todayUTC();
     if (!min || today < min) min = today;
@@ -141,8 +142,11 @@
       if (!min || d < min) min = d;
       if (!max || d > max) max = d;
     });
-    const days = extensionDays(task);
-    if (max && days > 0) max = addDays(max, days);
+    const ext = getExtensionRange(task);
+    if (ext) {
+      if (!min || ext.start < min) min = ext.start;
+      if (!max || ext.end > max) max = ext.end;
+    }
     return min ? { min, max } : null;
   }
 
@@ -161,28 +165,43 @@
     return raw.replace(/\s+/g, " ").trim();
   }
 
-  function extensionDays(task) {
+  // Extensions are their own independent date range (not necessarily right
+  // after the task's actual/anticipated dates - an extension can start
+  // weeks or months later). Returns null until both dates are set.
+  function getExtensionRange(task) {
     const ext = state.extensions[task.id];
-    return ext && ext.days > 0 ? ext.days : 0;
+    if (!ext) return null;
+    const start = parseDate(ext.start);
+    const end = parseDate(ext.end);
+    if (!start || !end || end < start) return null;
+    return { start, end };
   }
 
   // A task "occupies" the vessel for its actual dates if known (ground
   // truth), an actual-start-to-planned-end estimate if the work has begun
   // but has no recorded end yet, or its anticipated dates otherwise (a
-  // future booking that hasn't started). An entered extension pushes the end
-  // out further. Returns null if no usable dates.
+  // future booking that hasn't started). Returns null if no usable dates.
   function taskOccupiedInterval(task) {
     const plannedStart = parseDate(task.plannedStart);
     const plannedEnd = parseDate(task.plannedEnd);
     const actualStart = parseDate(task.actualStart);
     const actualEnd = parseDate(task.actualEnd);
-    let interval = null;
-    if (actualStart && actualEnd) interval = { start: actualStart, end: actualEnd };
-    else if (actualStart && plannedEnd) interval = { start: actualStart, end: plannedEnd };
-    else if (plannedStart && plannedEnd) interval = { start: plannedStart, end: plannedEnd };
-    if (!interval) return null;
-    const days = extensionDays(task);
-    return days > 0 ? { start: interval.start, end: addDays(interval.end, days) } : interval;
+    if (actualStart && actualEnd) return { start: actualStart, end: actualEnd };
+    if (actualStart && plannedEnd) return { start: actualStart, end: plannedEnd };
+    if (plannedStart && plannedEnd) return { start: plannedStart, end: plannedEnd };
+    return null;
+  }
+
+  // All the date spans a task occupies its vessel for: its own dates plus,
+  // separately, its extension range if one is set - these don't have to be
+  // adjacent or overlapping.
+  function taskBusyIntervals(task) {
+    const intervals = [];
+    const base = taskOccupiedInterval(task);
+    if (base) intervals.push(base);
+    const ext = getExtensionRange(task);
+    if (ext) intervals.push(ext);
+    return intervals;
   }
 
   function mergeIntervals(intervals) {
@@ -203,8 +222,7 @@
   function computeVesselGaps(vessel, tasks, rangeStart, rangeEnd) {
     const busy = tasks
       .filter((t) => getVessel(t) === vessel)
-      .map(taskOccupiedInterval)
-      .filter(Boolean)
+      .flatMap(taskBusyIntervals)
       .map((iv) => ({
         start: iv.start < rangeStart ? rangeStart : iv.start,
         end: iv.end > rangeEnd ? rangeEnd : iv.end
@@ -307,8 +325,7 @@
       variance = diff === 0 ? "On time" : (diff > 0 ? "+" + diff + "d late" : diff + "d early");
     }
     const extEntry = state.extensions[task.id];
-    const extDays = extensionDays(task);
-    const extAnchor = actualEnd || plannedEnd;
+    const extRange = getExtensionRange(task);
     tooltipEl.innerHTML =
       "<strong>" + escapeHtml(task.name) + "</strong>" +
       "<div class='tt-row'><span>Status</span><span>" + escapeHtml(displayStatusText(task, status)) + "</span></div>" +
@@ -318,10 +335,10 @@
       (task.percentComplete !== undefined && task.percentComplete !== null
         ? "<div class='tt-row'><span>% Complete</span><span>" + task.percentComplete + "%</span></div>" : "") +
       (task.assignedTo ? "<div class='tt-row'><span>Owner</span><span>" + escapeHtml(task.assignedTo) + "</span></div>" : "") +
-      (extDays > 0 && extAnchor
-        ? "<div class='tt-row'><span>Extension</span><span>+" + extDays + "d, through " + formatDate(addDays(extAnchor, extDays)) + "</span></div>"
+      (extRange
+        ? "<div class='tt-row'><span>Extension</span><span>" + formatDate(extRange.start) + " → " + formatDate(extRange.end) + "</span></div>"
         : "") +
-      (extDays > 0 && extEntry && extEntry.reason
+      (extRange && extEntry && extEntry.reason
         ? "<div class='tt-row'><span>Reason</span><span>" + escapeHtml(extEntry.reason) + "</span></div>" : "");
     tooltipEl.style.display = "block";
     positionTooltip(evt);
@@ -339,7 +356,8 @@
     checkbox.checked = !!existing;
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) {
-        state.extensions[task.id] = { days: (existing && existing.days) || 1, reason: (existing && existing.reason) || "" };
+        state.extensions[task.id] = { start: "", end: "", reason: "" };
+        expandExtensionsPanel();
       } else {
         delete state.extensions[task.id];
       }
@@ -347,40 +365,8 @@
       render();
     });
     extLabel.appendChild(checkbox);
-    extLabel.appendChild(document.createTextNode("Extension"));
+    extLabel.appendChild(document.createTextNode(existing ? "Extension (set dates below)" : "Extension"));
     extRow.appendChild(extLabel);
-
-    if (existing) {
-      const daysInput = document.createElement("input");
-      daysInput.type = "number";
-      daysInput.min = "1";
-      daysInput.className = "ext-days-input";
-      daysInput.value = existing.days;
-      daysInput.title = "Extension length in days";
-      daysInput.addEventListener("change", (e) => {
-        const v = Math.max(1, parseInt(e.target.value, 10) || 1);
-        state.extensions[task.id] = { days: v, reason: existing.reason || "" };
-        saveExtensions();
-        render();
-      });
-      extRow.appendChild(daysInput);
-
-      const unit = document.createElement("span");
-      unit.textContent = "d";
-      extRow.appendChild(unit);
-
-      const reasonInput = document.createElement("input");
-      reasonInput.type = "text";
-      reasonInput.className = "ext-reason-input";
-      reasonInput.placeholder = "reason / requested by";
-      reasonInput.value = existing.reason || "";
-      reasonInput.addEventListener("change", (e) => {
-        state.extensions[task.id] = { days: existing.days, reason: e.target.value.trim() };
-        saveExtensions();
-        render();
-      });
-      extRow.appendChild(reasonInput);
-    }
 
     return extRow;
   }
@@ -516,8 +502,6 @@
         timeline.appendChild(bar);
       }
 
-      let extensionAnchor = null; // { date, top } - where the extension bar continues from
-
       if (actualStart && actualEnd) {
         const bar = document.createElement("div");
         bar.className = "bar bar-actual status-" + status;
@@ -528,7 +512,6 @@
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
         timeline.appendChild(bar);
-        extensionAnchor = { date: actualEnd, top: "46px" };
       } else if (actualStart && !actualEnd) {
         // in-progress: draw from actual start to today
         const end = todayUTC();
@@ -541,19 +524,17 @@
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
         timeline.appendChild(bar);
-      } else if (plannedStart && plannedEnd) {
-        extensionAnchor = { date: plannedEnd, top: "27px" };
       }
 
-      const extDays = extensionDays(task);
-      if (extDays > 0 && extensionAnchor) {
-        const extStart = addDays(extensionAnchor.date, 1);
-        const extEnd = addDays(extensionAnchor.date, extDays);
+      // Extension is its own independent date range - it can fall anywhere
+      // on the timeline, not just right after the task's own dates.
+      const extRange = getExtensionRange(task);
+      if (extRange) {
         const bar = document.createElement("div");
         bar.className = "bar bar-extension";
-        bar.style.left = daysBetween(range.start, extStart) * pxPerDay + "px";
-        bar.style.width = Math.max(daysBetween(extStart, extEnd) * pxPerDay, 3) + "px";
-        bar.style.top = extensionAnchor.top;
+        bar.style.left = daysBetween(range.start, extRange.start) * pxPerDay + "px";
+        bar.style.width = Math.max(daysBetween(extRange.start, extRange.end) * pxPerDay, 3) + "px";
+        bar.style.top = "46px";
         bar.style.height = "11px";
         bar.addEventListener("mousemove", (e) => showTooltip(e, task, status));
         bar.addEventListener("mouseleave", hideTooltip);
@@ -585,6 +566,15 @@
     updateUrlFromState();
   }
 
+  function expandExtensionsPanel() {
+    state.extensionsExpanded = true;
+    const body = document.getElementById("extensions-body");
+    body.classList.remove("collapsed");
+    const btn = document.getElementById("extensions-toggle");
+    btn.setAttribute("aria-expanded", "true");
+    // Text gets its final "(N)" count from the next renderExtensionsSummary() call.
+  }
+
   function renderExtensionsSummary() {
     const results = document.getElementById("extensions-results");
     const toggle = document.getElementById("extensions-toggle");
@@ -595,7 +585,7 @@
     toggle.textContent = (state.extensionsExpanded ? "Hide" : "Show") + " (" + entries.length + ")";
 
     if (!entries.length) {
-      results.innerHTML = "<p class='status-message'>No extensions applied yet.</p>";
+      results.innerHTML = "<p class='status-message'>No extensions applied yet. Check \"Extension\" on a task row to add one.</p>";
       return;
     }
 
@@ -605,8 +595,9 @@
       const item = document.createElement("li");
       item.className = "ext-summary-item";
 
-      const info = document.createElement("div");
-      const nameEl = document.createElement(task.link ? "a" : "div");
+      const top = document.createElement("div");
+      top.className = "ext-summary-top";
+      const nameEl = document.createElement(task.link ? "a" : "span");
       nameEl.className = "ext-summary-name";
       if (task.link) {
         nameEl.href = task.link;
@@ -615,18 +606,6 @@
         nameEl.title = "Open this row in Smartsheet";
       }
       nameEl.textContent = task.name;
-      const detailEl = document.createElement("div");
-      detailEl.className = "ext-summary-detail";
-      detailEl.textContent = "+" + ext.days + " day" + (ext.days === 1 ? "" : "s") + " • " + getVessel(task);
-      info.appendChild(nameEl);
-      info.appendChild(detailEl);
-      if (ext.reason) {
-        const reasonEl = document.createElement("div");
-        reasonEl.className = "ext-summary-reason";
-        reasonEl.textContent = ext.reason;
-        info.appendChild(reasonEl);
-      }
-
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.className = "ext-remove-btn";
@@ -637,9 +616,62 @@
         saveExtensions();
         render();
       });
+      top.appendChild(nameEl);
+      top.appendChild(removeBtn);
+      item.appendChild(top);
 
-      item.appendChild(info);
-      item.appendChild(removeBtn);
+      const range = getExtensionRange(task);
+      const detailEl = document.createElement("div");
+      detailEl.className = "ext-summary-detail";
+      const dayCount = range ? daysBetween(range.start, range.end) + 1 : null;
+      detailEl.textContent = getVessel(task) + (dayCount ? " • " + dayCount + " day" + (dayCount === 1 ? "" : "s") : " • pick both dates below");
+      item.appendChild(detailEl);
+
+      const controls = document.createElement("div");
+      controls.className = "ext-summary-controls";
+
+      const startInput = document.createElement("input");
+      startInput.type = "date";
+      startInput.className = "ext-date-input";
+      startInput.value = ext.start || "";
+      startInput.setAttribute("aria-label", "Extension start date");
+      startInput.addEventListener("change", (e) => {
+        state.extensions[task.id] = { start: e.target.value, end: ext.end, reason: ext.reason || "" };
+        saveExtensions();
+        render();
+      });
+
+      const arrow = document.createElement("span");
+      arrow.textContent = "→";
+
+      const endInput = document.createElement("input");
+      endInput.type = "date";
+      endInput.className = "ext-date-input";
+      endInput.value = ext.end || "";
+      endInput.setAttribute("aria-label", "Extension end date");
+      endInput.addEventListener("change", (e) => {
+        state.extensions[task.id] = { start: ext.start, end: e.target.value, reason: ext.reason || "" };
+        saveExtensions();
+        render();
+      });
+
+      const reasonInput = document.createElement("input");
+      reasonInput.type = "text";
+      reasonInput.className = "ext-reason-input";
+      reasonInput.placeholder = "reason / requested by";
+      reasonInput.value = ext.reason || "";
+      reasonInput.addEventListener("change", (e) => {
+        state.extensions[task.id] = { start: ext.start, end: ext.end, reason: e.target.value.trim() };
+        saveExtensions();
+        render();
+      });
+
+      controls.appendChild(startInput);
+      controls.appendChild(arrow);
+      controls.appendChild(endInput);
+      controls.appendChild(reasonInput);
+      item.appendChild(controls);
+
       list.appendChild(item);
     });
 

@@ -41,11 +41,15 @@ overwrite it with real data.
   utilization within the current date range. Its rows are also highlighted
   (accent left border + tinted background) in the main chart below, so you
   can see exactly which bars the gaps correspond to.
-- **Extensions** - per-task checkbox to add extra days (with an optional
-  reason/requested-by note), shown as a purple bar segment on the chart and
-  factored into Vessel Availability. An **Active Extensions** panel lists
-  every task currently extended with a one-click remove. Extension data is
-  stored in your browser's local storage only - it does not sync to
+- **Extensions** - a checkbox on each task row marks it as extended; the
+  actual start/end dates and an optional reason/requested-by note are then
+  set in the **Active Extensions** panel using normal date pickers. An
+  extension is its own independent date range - it doesn't have to be
+  right after the task's actual/anticipated dates, so it correctly
+  represents an extension that starts weeks or months later. It shows as a
+  purple bar segment on the chart wherever it falls, and is factored into
+  Vessel Availability as separate busy time for that vessel. Extension data
+  is stored in your browser's local storage only - it does not sync to
   Smartsheet, the repo, or other devices/teammates.
 - **Shareable links** - your current search, filters, vessel selection, date
   range, and zoom level are kept in the URL, so you can copy/paste a link to
