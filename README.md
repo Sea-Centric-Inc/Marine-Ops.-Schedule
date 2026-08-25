@@ -7,7 +7,7 @@ and **actual** dates on separate bars for every task. Data is pulled from a
 Smartsheet on a schedule and displayed as a static site on GitHub Pages.
 
 Live site (once Pages is enabled, see below):
-`https://stephensquires329-dotcom.github.io/Marine-Operations/`
+`https://sea-centric-inc.github.io/Marine-Ops.-Schedule/`
 
 ## How it works
 
