@@ -655,23 +655,31 @@ a.task-name:hover, a.ext-summary-name:hover {
 }
 
 @media print {
+  * {
+    /* Browsers strip background colors from print output by default -
+       this is what actually makes the status/extension bars and legend
+       swatches disappear on paper. Force them to print as designed. */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   .no-print, .ext-row, .today-line, .tooltip {
     display: none !important;
   }
 
   body {
     background: #fff;
-    color: #000;
+    color: #1c2530;
   }
 
   .app-header {
-    background: #fff;
-    color: #000;
-    border-bottom: 2px solid #000;
+    background: #10243e;
+    color: #f5f6f8;
   }
 
   .app-header-subtitle, .app-header-meta {
-    color: #333;
+    color: #b7c3d1;
   }
 
   .gantt-scroll {
