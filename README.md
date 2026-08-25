@@ -63,6 +63,67 @@ overwrite it with real data.
   form in a new tab. Edit the `href` on that link in `index.html` if the
   form URL ever changes.
 
+## Restricting access to seacentric.ca accounts (Azure Static Web Apps)
+
+[`staticwebapp.config.json`](staticwebapp.config.json) requires Microsoft
+Entra ID (Azure AD) sign-in on every route (`allowedRoles: ["authenticated"]`
+on `/*`), so an unauthenticated visitor gets redirected straight to
+Microsoft login. **This only takes effect on the Azure Static Web Apps
+deployment** - it's an Azure-specific config file with no effect on GitHub
+Pages, which has no access control at all. If GitHub Pages is still enabled
+for this repo, anyone can bypass the login entirely by visiting the
+`github.io` URL instead - **disable it** (repo Settings → Pages → Source:
+None) once Azure is what you actually want people using.
+
+Requiring *sign-in* is the config file's job; requiring sign-in *from your
+tenant specifically* is a property of how the Entra ID app registration
+itself is set up - that part happens in the Azure Portal, not in this repo:
+
+### 1. Register an app in Microsoft Entra ID
+
+Azure Portal → **Microsoft Entra ID** → **App registrations** → **New registration**.
+
+- **Name**: anything, e.g. "Marine Ops Schedule"
+- **Supported account types**: **Accounts in this organizational directory
+  only (Sea-Centric-Inc only - Single tenant)**. This is what actually
+  enforces "seacentric.ca accounts only" - Microsoft rejects anyone outside
+  the tenant at sign-in, before your app is ever involved. (Note this
+  includes any guest/external accounts your tenant has invited in, not
+  strictly the email domain - if that distinction matters, it needs an
+  extra custom-roles check, which isn't set up here.)
+- **Redirect URI**: platform **Web**, value
+  `https://<your-static-web-app-hostname>/.auth/login/aad/callback`
+  (use your `*.azurestaticapps.net` hostname, or your custom domain once
+  it's attached - you can add both as separate redirect URIs).
+
+After creating it:
+
+- **Certificates & secrets** → **New client secret** → copy the **value**
+  immediately (shown once).
+- **Overview** page → copy the **Application (client) ID**.
+
+### 2. Add those as Static Web App application settings
+
+Azure Portal → your Static Web App → **Settings → Environment variables**
+(or **Configuration**, depending on portal version) → add:
+
+| Name | Value |
+|---|---|
+| `AAD_CLIENT_ID` | the Application (client) ID from step 1 |
+| `AAD_CLIENT_SECRET` | the client secret value from step 1 |
+
+### 3. Push and verify
+
+`staticwebapp.config.json` is already in the repo and deploys automatically
+on the next push. Visit the site - you should land on a Microsoft login
+screen before seeing anything else, and an account outside the tenant
+should be rejected by Microsoft itself rather than reaching the app.
+
+If your tenant's verified domain isn't `seacentric.ca`, update the
+`openIdIssuer` URL in `staticwebapp.config.json` to match (it accepts either
+the verified domain name or the tenant's GUID, found on the Entra ID
+**Overview** page).
+
 ## One-time setup
 
 ### 1. Enable GitHub Pages
