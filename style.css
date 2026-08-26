@@ -381,8 +381,55 @@ body {
 }
 
 .gantt-timeline-header {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   border-bottom: 1px solid var(--border);
+}
+
+.timeline-month-row {
+  position: relative;
+  height: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.month-band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  border-left: 1px solid var(--border);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-tick-row {
+  position: relative;
+  height: 26px;
+}
+
+.tick-label {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  border-left: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tick-label.weekend-label {
+  background: var(--weekend-fill);
+  justify-content: center;
+  padding: 0;
 }
 
 .gantt-body {
@@ -596,29 +643,19 @@ a.task-name:hover, a.ext-summary-name:hover {
   pointer-events: none;
 }
 
-.month-label, .day-label {
+.body-gridline {
   position: absolute;
   top: 0;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  padding: 4px 6px;
-  border-left: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.gridline {
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 1px;
   background: var(--grid-line);
+  pointer-events: none;
 }
 
-.weekend-shade {
+.body-weekend-shade {
   position: absolute;
   top: 0;
-  bottom: 0;
   background: var(--weekend-fill);
+  pointer-events: none;
 }
 
 .app-footer {

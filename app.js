@@ -254,77 +254,76 @@
     return gaps;
   }
 
-  function buildHeader(range, pxPerDay, totalWidth) {
-    const header = document.createElement("div");
-    header.className = "gantt-timeline-header";
-    header.style.width = totalWidth + "px";
-    header.style.height = "32px";
-
+  // One tick per day (Day zoom) or per week-start Monday (Week/Month zoom).
+  // Used to keep the header labels, body gridlines, and weekend shading all
+  // aligned to the exact same x-coordinates.
+  function computeTicks(range, pxPerDay) {
+    const ticks = [];
     const totalDays = daysBetween(range.start, range.end);
-
     if (state.zoom === "day") {
       for (let i = 0; i <= totalDays; i++) {
-        const d = addDays(range.start, i);
-        const x = i * pxPerDay;
-        header.appendChild(gridline(x, "100%"));
-        if (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
-          header.appendChild(weekendShade(x, pxPerDay, "32px", true));
-        }
-        const label = document.createElement("div");
-        label.className = "day-label";
-        label.style.left = x + "px";
-        label.style.width = pxPerDay + "px";
-        label.textContent = d.getUTCDate();
-        header.appendChild(label);
+        const date = addDays(range.start, i);
+        ticks.push({ x: i * pxPerDay, date, weekend: date.getUTCDay() === 0 || date.getUTCDay() === 6 });
       }
     } else {
-      // week / month zoom: label at week boundaries (Mondays) or month boundaries
       let cursor = new Date(range.start);
-      // align to Monday
-      const dow = cursor.getUTCDay();
-      const offsetToMonday = (dow + 6) % 7;
-      cursor = addDays(cursor, -offsetToMonday);
-
-      let lastMonth = -1;
+      cursor = addDays(cursor, -((cursor.getUTCDay() + 6) % 7)); // align to Monday
       while (cursor <= range.end) {
-        const x = daysBetween(range.start, cursor) * pxPerDay;
-        header.appendChild(gridline(x, "100%"));
-        if (state.zoom === "week") {
-          const label = document.createElement("div");
-          label.className = "day-label";
-          label.style.left = x + "px";
-          label.textContent = cursor.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
-          header.appendChild(label);
-        } else if (cursor.getUTCMonth() !== lastMonth) {
-          lastMonth = cursor.getUTCMonth();
-          const label = document.createElement("div");
-          label.className = "month-label";
-          label.style.left = x + "px";
-          label.textContent = cursor.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" });
-          header.appendChild(label);
-        }
+        ticks.push({ x: daysBetween(range.start, cursor) * pxPerDay, date: new Date(cursor), weekend: false });
         cursor = addDays(cursor, 7);
       }
     }
+    return ticks;
+  }
+
+  // Two-row header, matching the standard Gantt convention (e.g. MS Project,
+  // Smartsheet): a month band on top, and day numbers / week-start dates
+  // below - so any bar's edge can be traced straight up to an exact date
+  // without needing the tooltip.
+  function buildHeader(range, pxPerDay, totalWidth, ticks) {
+    const header = document.createElement("div");
+    header.className = "gantt-timeline-header";
+    header.style.width = totalWidth + "px";
+
+    const monthRow = document.createElement("div");
+    monthRow.className = "timeline-month-row";
+    let mCursor = new Date(Date.UTC(range.start.getUTCFullYear(), range.start.getUTCMonth(), 1));
+    while (mCursor <= range.end) {
+      const nextMonth = new Date(Date.UTC(mCursor.getUTCFullYear(), mCursor.getUTCMonth() + 1, 1));
+      const bandStart = mCursor < range.start ? range.start : mCursor;
+      const bandEnd = nextMonth < range.end ? nextMonth : range.end;
+      if (bandEnd > bandStart) {
+        const band = document.createElement("div");
+        band.className = "month-band";
+        band.style.left = (daysBetween(range.start, bandStart) * pxPerDay) + "px";
+        band.style.width = (daysBetween(bandStart, bandEnd) * pxPerDay) + "px";
+        band.textContent = mCursor.toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
+        monthRow.appendChild(band);
+      }
+      mCursor = nextMonth;
+    }
+    header.appendChild(monthRow);
+
+    const tickRow = document.createElement("div");
+    tickRow.className = "timeline-tick-row";
+    if (state.zoom !== "month") {
+      ticks.forEach((tick) => {
+        const label = document.createElement("div");
+        label.className = "tick-label";
+        label.style.left = tick.x + "px";
+        if (state.zoom === "day") {
+          label.style.width = pxPerDay + "px";
+          label.textContent = tick.date.getUTCDate();
+          if (tick.weekend) label.classList.add("weekend-label");
+        } else {
+          label.textContent = tick.date.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+        }
+        tickRow.appendChild(label);
+      });
+    }
+    header.appendChild(tickRow);
 
     return header;
-  }
-
-  function gridline(x, height) {
-    const el = document.createElement("div");
-    el.className = "gridline";
-    el.style.left = x + "px";
-    el.style.height = height;
-    return el;
-  }
-
-  function weekendShade(x, pxPerDay, height, single) {
-    const el = document.createElement("div");
-    el.className = "weekend-shade";
-    el.style.left = x + "px";
-    el.style.width = pxPerDay + "px";
-    el.style.height = height;
-    return el;
   }
 
   function showTooltip(evt, task, status) {
@@ -453,13 +452,15 @@
     scroll.className = "gantt-scroll";
     scroll.style.setProperty("--label-width", LABEL_WIDTH + "px");
 
+    const ticks = computeTicks(range, pxPerDay);
+
     const headerRow = document.createElement("div");
     headerRow.className = "gantt-header-row";
     const corner = document.createElement("div");
     corner.className = "gantt-corner";
     corner.textContent = "Task";
     headerRow.appendChild(corner);
-    headerRow.appendChild(buildHeader(range, pxPerDay, totalWidth));
+    headerRow.appendChild(buildHeader(range, pxPerDay, totalWidth, ticks));
     scroll.appendChild(headerRow);
 
     const body = document.createElement("div");
@@ -563,14 +564,38 @@
     });
 
     body.style.width = (LABEL_WIDTH + totalWidth) + "px";
+    body.style.position = "relative";
+
+    const bodyHeight = visibleTasks.length * ROW_HEIGHT;
+
+    // Full-height gridlines (and weekend shading at Day zoom) so a bar's
+    // edge can be traced straight up to the header's date, instead of
+    // needing to hover for a tooltip.
+    if (state.zoom === "day") {
+      ticks.forEach((tick) => {
+        if (!tick.weekend) return;
+        const shade = document.createElement("div");
+        shade.className = "body-weekend-shade";
+        shade.style.left = (LABEL_WIDTH + tick.x) + "px";
+        shade.style.width = pxPerDay + "px";
+        shade.style.height = bodyHeight + "px";
+        body.appendChild(shade);
+      });
+    }
+    ticks.forEach((tick) => {
+      const line = document.createElement("div");
+      line.className = "body-gridline";
+      line.style.left = (LABEL_WIDTH + tick.x) + "px";
+      line.style.height = bodyHeight + "px";
+      body.appendChild(line);
+    });
 
     const today = todayUTC();
     if (today >= range.start && today <= range.end) {
       const todayLine = document.createElement("div");
       todayLine.className = "today-line";
       todayLine.style.left = (LABEL_WIDTH + daysBetween(range.start, today) * pxPerDay) + "px";
-      todayLine.style.height = (visibleTasks.length * ROW_HEIGHT) + "px";
-      body.style.position = "relative";
+      todayLine.style.height = bodyHeight + "px";
       body.appendChild(todayLine);
     }
 
