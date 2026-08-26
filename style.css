@@ -132,7 +132,7 @@ body {
   font-size: 0.9rem;
 }
 
-#status-filter {
+#status-filter, #category-filter {
   padding: 7px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;

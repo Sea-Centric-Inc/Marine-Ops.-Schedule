@@ -34,9 +34,11 @@ overwrite it with real data.
 - **Dual-bar Gantt** - dashed "Anticipated" bar and a solid, status-colored
   "Actual" bar per task. Task names link directly to that row in Smartsheet
   (opens in a new tab) wherever a permalink was available from the sync.
-- **Search, status filter, hide-completed, date range** - the toolbar above
-  the chart; the date range also narrows what the Vessel Availability panel
-  considers.
+- **Search, status filter, category filter, hide-completed, date range** -
+  the toolbar above the chart; the date range also narrows what the Vessel
+  Availability panel considers. Category is one of the company's 3 main
+  project categories (`CATEGORIES` near the top of `app.js`: Vessels, ECMI,
+  Lewisporte) - see "Project categories" below for how a task gets one.
 - **Vessel Availability** - pick a vessel, see its open date gaps and percent
   utilization within the current date range. Its rows are also highlighted
   (accent left border + tinted background) in the main chart below, so you
@@ -216,6 +218,23 @@ The Vessel Availability and gap calculations use a fixed list of vessels
 (`VESSELS` near the top of [`app.js`](app.js)) rather than deriving them from
 the data, so a vessel with zero current tasks still shows up as "fully
 available." Edit that array to add, rename, or remove a vessel.
+
+### Project categories
+
+The company has 3 main project categories - Vessels, ECMI, Lewisporte
+(`CATEGORIES` near the top of `app.js`) - and the toolbar's category filter
+lets you narrow the chart to just one. A task's category comes from its own
+Smartsheet column once you map one in `config/smartsheet-map.json`:
+
+```json
+"category": "Project Category"
+```
+
+(replace `"Project Category"` with whatever that column is actually titled).
+Until that column exists, any task with a known vessel defaults to the
+**Vessels** category automatically, so the filter is useful immediately
+instead of showing nothing - see `getCategory()` in `app.js`. ECMI and
+Lewisporte tasks will need the real column mapped to show up correctly.
 
 ## Local development
 

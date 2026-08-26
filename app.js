@@ -16,11 +16,18 @@
 
   const VESSELS = ["Connor Murphy", "Patrick & William", "Strait Signet", "Strait Hunter", "Strait Explorer"];
 
+  // The company's 3 main project categories. A task's category comes from
+  // its own Smartsheet column when mapped (config/smartsheet-map.json); until
+  // that column exists, any task with a known vessel defaults to "Vessels"
+  // so the filter is useful immediately rather than showing nothing.
+  const CATEGORIES = ["Vessels", "ECMI", "Lewisporte"];
+
   const state = {
     tasks: [],
     zoom: "week",
     search: "",
     statusFilter: "",
+    categoryFilter: "",
     hideCompleted: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
     dateTo: null,
@@ -163,6 +170,13 @@
   function getVessel(task) {
     const raw = task.vessel || String(task.name || "").split(" – ")[0];
     return raw.replace(/\s+/g, " ").trim();
+  }
+
+  // See CATEGORIES above for the fallback rule.
+  function getCategory(task) {
+    const raw = String(task.category || "").trim();
+    if (raw) return raw;
+    return getVessel(task) ? "Vessels" : "";
   }
 
   // Extensions are their own independent date range (not necessarily right
@@ -328,6 +342,7 @@
     const extRange = getExtensionRange(task);
     tooltipEl.innerHTML =
       "<strong>" + escapeHtml(task.name) + "</strong>" +
+      "<div class='tt-row'><span>Category</span><span>" + escapeHtml(getCategory(task) || "—") + "</span></div>" +
       "<div class='tt-row'><span>Status</span><span>" + escapeHtml(displayStatusText(task, status)) + "</span></div>" +
       "<div class='tt-row'><span>Anticipated</span><span>" + formatDate(plannedStart) + " → " + formatDate(plannedEnd) + "</span></div>" +
       "<div class='tt-row'><span>Actual</span><span>" + formatDate(actualStart) + " → " + formatDate(actualEnd) + "</span></div>" +
@@ -401,6 +416,7 @@
     }
     const slug = statusSlug(task.status);
     if (state.statusFilter && slug !== state.statusFilter) return false;
+    if (state.categoryFilter && getCategory(task) !== state.categoryFilter) return false;
     if (state.hideCompleted && slug === "complete") return false;
 
     if (state.dateFrom && state.dateTo) {
@@ -737,6 +753,16 @@
     });
   }
 
+  function populateCategoryFilter() {
+    const select = document.getElementById("category-filter");
+    CATEGORIES.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    });
+  }
+
   function populateStatusFilter(tasks) {
     const select = document.getElementById("status-filter");
     const seen = new Set();
@@ -756,6 +782,7 @@
     const params = new URLSearchParams();
     if (state.search) params.set("q", state.search);
     if (state.statusFilter) params.set("status", state.statusFilter);
+    if (state.categoryFilter) params.set("category", state.categoryFilter);
     if (state.hideCompleted) params.set("hideCompleted", "1");
     if (state.vessel) params.set("vessel", state.vessel);
     if (state.dateFrom) params.set("from", formatDateInput(state.dateFrom));
@@ -776,6 +803,10 @@
     if (params.has("status")) {
       state.statusFilter = params.get("status");
       document.getElementById("status-filter").value = state.statusFilter;
+    }
+    if (params.has("category")) {
+      state.categoryFilter = params.get("category");
+      document.getElementById("category-filter").value = state.categoryFilter;
     }
     if (params.get("hideCompleted") === "1") {
       state.hideCompleted = true;
@@ -819,6 +850,10 @@
     });
     document.getElementById("status-filter").addEventListener("change", (e) => {
       state.statusFilter = e.target.value;
+      render();
+    });
+    document.getElementById("category-filter").addEventListener("change", (e) => {
+      state.categoryFilter = e.target.value;
       render();
     });
     document.getElementById("hide-completed").addEventListener("change", (e) => {
@@ -877,6 +912,7 @@
     document.body.appendChild(tooltipEl);
 
     populateVesselSelect();
+    populateCategoryFilter();
 
     // Shrink the whole timeline to fit one page width so printing/exporting
     // captures the entire Gantt chart in a single view instead of cutting

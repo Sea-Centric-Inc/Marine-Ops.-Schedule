@@ -135,6 +135,9 @@ async function main() {
     if ((columnIdsByField.assignedTo || []).length) {
       task.assignedTo = String(get("assignedTo") || "");
     }
+    if ((columnIdsByField.category || []).length) {
+      task.category = String(get("category") || "");
+    }
     tasks.push(task);
   });
 
