@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T16:13:28.277Z",
+  "generatedAt": "2026-09-11T16:41:57.774Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -11,7 +11,7 @@
       "plannedEnd": "2026-09-15",
       "actualStart": "2026-09-22",
       "actualEnd": "2026-10-20",
-      "status": "Not Started",
+      "status": "Planning Phase",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=1444662881746820"
     },
     {
@@ -44,7 +44,7 @@
       "plannedEnd": "2026-07-30",
       "actualStart": "2026-07-19",
       "actualEnd": "2026-07-31",
-      "status": "Planning Phase",
+      "status": "Completed",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=8200062322802564"
     },
     {
@@ -55,7 +55,7 @@
       "plannedEnd": "2026-08-11",
       "actualStart": "2026-08-01",
       "actualEnd": "2026-08-10",
-      "status": "Not Started",
+      "status": "Completed",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=881712928325508"
     },
     {
@@ -66,7 +66,7 @@
       "plannedEnd": "2026-10-18",
       "actualStart": "2026-09-16",
       "actualEnd": "2026-10-14",
-      "status": "Planning Phase",
+      "status": "Active",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=573103761194884"
     },
     {
@@ -77,7 +77,7 @@
       "plannedEnd": "2026-07-18",
       "actualStart": "2026-07-11",
       "actualEnd": "2026-07-18",
-      "status": "Planning Phase",
+      "status": "",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=5076703388565380"
     },
     {
@@ -121,7 +121,7 @@
       "plannedEnd": "2026-08-31",
       "actualStart": "2026-07-30",
       "actualEnd": "2026-10-07",
-      "status": "Active",
+      "status": "Planning Phase",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=6202603295408004"
     },
     {
