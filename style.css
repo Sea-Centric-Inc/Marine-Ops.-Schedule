@@ -21,7 +21,7 @@
   --status-not-started: #d1332f;
   --status-extension: #8457e0;
 
-  --vessel-highlight-bg: rgba(31, 111, 235, 0.08);
+  --entity-highlight-bg: rgba(31, 111, 235, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -46,7 +46,7 @@
     --status-not-started: #ff6b66;
     --status-extension: #a98bff;
 
-    --vessel-highlight-bg: rgba(77, 155, 255, 0.14);
+    --entity-highlight-bg: rgba(77, 155, 255, 0.14);
   }
 }
 
@@ -285,7 +285,7 @@ body {
   color: var(--text-muted);
 }
 
-#vessel-select {
+#entity-select {
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -485,12 +485,12 @@ a.task-name:hover, a.ext-summary-name:hover {
   color: var(--accent);
 }
 
-.gantt-row.vessel-highlight .row-label {
-  background: var(--vessel-highlight-bg);
+.gantt-row.entity-highlight .row-label {
+  background: var(--entity-highlight-bg);
   border-left: 3px solid var(--accent);
 }
-.gantt-row.vessel-highlight .row-timeline {
-  background: var(--vessel-highlight-bg);
+.gantt-row.entity-highlight .row-timeline {
+  background: var(--entity-highlight-bg);
 }
 
 .row-label .task-meta {

@@ -36,7 +36,7 @@ function cellValue(cell) {
   }
   // Smartsheet text cells can contain embedded line breaks that render fine
   // in a browser (CSS collapses them) but break exact-match comparisons in
-  // JS, e.g. matching a vessel name against a fixed list.
+  // JS, e.g. matching an entity name against a fixed list.
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : value;
 }
 
@@ -121,7 +121,7 @@ async function main() {
     const task = {
       id: String(row.id),
       name: String(name),
-      vessel: String(get("vessel") || ""),
+      entity: String(get("entity") || ""),
       plannedStart: toDateString(get("plannedStart")),
       plannedEnd: toDateString(get("plannedEnd")),
       actualStart: toDateString(get("actualStart")),

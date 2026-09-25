@@ -14,13 +14,17 @@
   const ACTIVE_WORDS = ["active"];
   const PLANNING_WORDS = ["planning phase", "planning"];
 
-  const VESSELS = ["Connor Murphy", "Patrick & William", "Strait Signet", "Strait Hunter", "Strait Explorer"];
+  // Known entities for the Entity Availability panel - vessels plus the
+  // non-vessel entities the company has expanded into (Lewisporte, ECMI),
+  // so they show up in the filter/availability dropdown even before they
+  // have any tasks of their own.
+  const ENTITIES = ["Connor Murphy", "Patrick & William", "Strait Signet", "Strait Hunter", "Strait Explorer", "Lewisporte", "ECMI"];
 
-  // The company's 3 main project categories. A task's category comes from
-  // its own Smartsheet column when mapped (config/smartsheet-map.json); until
-  // that column exists, any task with a known vessel defaults to "Vessels"
-  // so the filter is useful immediately rather than showing nothing.
-  const CATEGORIES = ["Vessels", "ECMI", "Lewisporte"];
+  // The company's 3 main project categories, matching the "Category" picklist
+  // column's exact options in Smartsheet. A task's category comes from that
+  // column (config/smartsheet-map.json); if it's ever blank, any task with a
+  // known entity defaults to "Vessel" so the filter is useful immediately.
+  const CATEGORIES = ["Vessel", "ECMI", "Lewisporte"];
 
   const state = {
     tasks: [],
@@ -31,7 +35,7 @@
     hideCompleted: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
     dateTo: null,
-    vessel: "",
+    entity: "",
     availabilityExpanded: false,
     extensionsExpanded: false,
     extensions: {}, // taskId -> { start: string, end: string, reason: string }, persisted to localStorage
@@ -164,11 +168,12 @@
     return y + "-" + m + "-" + d;
   }
 
-  // Vessel comes from its own field when available (fetched directly from the
-  // Smartsheet "Vessel" column); older cached data falls back to parsing it
-  // back out of "Vessel – RFP/Quote No." task names.
-  function getVessel(task) {
-    const raw = task.vessel || String(task.name || "").split(" – ")[0];
+  // Entity comes from its own field when available (fetched directly from
+  // the Smartsheet "Entity" column - a vessel name, or a non-vessel entity
+  // like "Lewisporte"/"ECMI"); older cached data falls back to parsing it
+  // back out of "Entity – RFP/Quote No." task names.
+  function getEntity(task) {
+    const raw = task.entity || String(task.name || "").split(" – ")[0];
     return raw.replace(/\s+/g, " ").trim();
   }
 
@@ -176,7 +181,7 @@
   function getCategory(task) {
     const raw = String(task.category || "").trim();
     if (raw) return raw;
-    return getVessel(task) ? "Vessels" : "";
+    return getEntity(task) ? "Vessel" : "";
   }
 
   // Extensions are their own independent date range (not necessarily right
@@ -191,7 +196,7 @@
     return { start, end };
   }
 
-  // A task "occupies" the vessel for its actual dates if known (ground
+  // A task "occupies" the entity for its actual dates if known (ground
   // truth), an actual-start-to-planned-end estimate if the work has begun
   // but has no recorded end yet, or its anticipated dates otherwise (a
   // future booking that hasn't started). Returns null if no usable dates.
@@ -206,7 +211,7 @@
     return null;
   }
 
-  // All the date spans a task occupies its vessel for: its own dates plus,
+  // All the date spans a task occupies its entity for: its own dates plus,
   // separately, its extension range if one is set - these don't have to be
   // adjacent or overlapping.
   function taskBusyIntervals(task) {
@@ -232,10 +237,10 @@
     return merged;
   }
 
-  // Free gaps for one vessel within [rangeStart, rangeEnd], both inclusive.
-  function computeVesselGaps(vessel, tasks, rangeStart, rangeEnd) {
+  // Free gaps for one entity within [rangeStart, rangeEnd], both inclusive.
+  function computeEntityGaps(entity, tasks, rangeStart, rangeEnd) {
     const busy = tasks
-      .filter((t) => getVessel(t) === vessel)
+      .filter((t) => getEntity(t) === entity)
       .flatMap(taskBusyIntervals)
       .map((iv) => ({
         start: iv.start < rangeStart ? rangeStart : iv.start,
@@ -379,7 +384,7 @@
       render();
     });
     extLabel.appendChild(checkbox);
-    extLabel.appendChild(document.createTextNode(existing ? "Extension (set dates below)" : "Extension"));
+    extLabel.appendChild(document.createTextNode(existing ? "Extension (set dates above)" : "Extension"));
     extRow.appendChild(extLabel);
 
     return extRow;
@@ -471,7 +476,7 @@
     visibleTasks.forEach((task) => {
       const row = document.createElement("div");
       row.className = "gantt-row";
-      if (state.vessel && getVessel(task) === state.vessel) row.classList.add("vessel-highlight");
+      if (state.entity && getEntity(task) === state.entity) row.classList.add("entity-highlight");
       row.style.height = ROW_HEIGHT + "px";
 
       const label = document.createElement("div");
@@ -602,7 +607,7 @@
     scroll.appendChild(body);
     root.appendChild(scroll);
 
-    renderVesselAvailability(range);
+    renderEntityAvailability(range);
     renderExtensionsSummary();
     updateUrlFromState();
   }
@@ -665,7 +670,7 @@
       const detailEl = document.createElement("div");
       detailEl.className = "ext-summary-detail";
       const dayCount = range ? daysBetween(range.start, range.end) + 1 : null;
-      detailEl.textContent = getVessel(task) + (dayCount ? " • " + dayCount + " day" + (dayCount === 1 ? "" : "s") : " • pick both dates below");
+      detailEl.textContent = getEntity(task) + (dayCount ? " • " + dayCount + " day" + (dayCount === 1 ? "" : "s") : " • pick both dates below");
       item.appendChild(detailEl);
 
       const controls = document.createElement("div");
@@ -720,22 +725,22 @@
     results.appendChild(list);
   }
 
-  function renderVesselAvailability(range) {
+  function renderEntityAvailability(range) {
     const results = document.getElementById("availability-results");
     const rangeLabel = document.getElementById("availability-range-label");
     rangeLabel.textContent = "within " + formatDate(range.start) + " – " + formatDate(addDays(range.end, -1));
 
-    if (!state.vessel) {
-      results.innerHTML = "<p class='status-message'>Pick a vessel to see open date gaps within the current date range above.</p>";
+    if (!state.entity) {
+      results.innerHTML = "<p class='status-message'>Pick an entity to see open date gaps within the current date range above.</p>";
       return;
     }
 
     const rangeEnd = addDays(range.end, -1); // range.end is exclusive in computeRange()
-    const gaps = computeVesselGaps(state.vessel, state.tasks, range.start, rangeEnd);
+    const gaps = computeEntityGaps(state.entity, state.tasks, range.start, rangeEnd);
     const totalRangeDays = daysBetween(range.start, rangeEnd) + 1;
 
     if (!gaps.length) {
-      results.innerHTML = "<p class='status-message'>" + escapeHtml(state.vessel) + " has no open availability in this date range &ndash; fully booked (100% utilized).</p>";
+      results.innerHTML = "<p class='status-message'>" + escapeHtml(state.entity) + " has no open availability in this date range &ndash; fully booked (100% utilized).</p>";
       return;
     }
 
@@ -768,9 +773,9 @@
     results.appendChild(list);
   }
 
-  function populateVesselSelect() {
-    const select = document.getElementById("vessel-select");
-    VESSELS.forEach((v) => {
+  function populateEntitySelect() {
+    const select = document.getElementById("entity-select");
+    ENTITIES.forEach((v) => {
       const opt = document.createElement("option");
       opt.value = v;
       opt.textContent = v;
@@ -809,7 +814,7 @@
     if (state.statusFilter) params.set("status", state.statusFilter);
     if (state.categoryFilter) params.set("category", state.categoryFilter);
     if (state.hideCompleted) params.set("hideCompleted", "1");
-    if (state.vessel) params.set("vessel", state.vessel);
+    if (state.entity) params.set("entity", state.entity);
     if (state.dateFrom) params.set("from", formatDateInput(state.dateFrom));
     if (state.dateTo) params.set("to", formatDateInput(state.dateTo));
     if (state.zoom !== "week") params.set("zoom", state.zoom);
@@ -837,11 +842,11 @@
       state.hideCompleted = true;
       document.getElementById("hide-completed").checked = true;
     }
-    if (params.has("vessel")) {
-      const vesselSelect = document.getElementById("vessel-select");
-      vesselSelect.value = params.get("vessel");
-      if (vesselSelect.value === params.get("vessel")) {
-        state.vessel = params.get("vessel");
+    if (params.has("entity")) {
+      const entitySelect = document.getElementById("entity-select");
+      entitySelect.value = params.get("entity");
+      if (entitySelect.value === params.get("entity")) {
+        state.entity = params.get("entity");
         state.availabilityExpanded = true;
         document.getElementById("availability-body").classList.remove("collapsed");
         const toggle = document.getElementById("availability-toggle");
@@ -885,8 +890,8 @@
       state.hideCompleted = e.target.checked;
       render();
     });
-    document.getElementById("vessel-select").addEventListener("change", (e) => {
-      state.vessel = e.target.value;
+    document.getElementById("entity-select").addEventListener("change", (e) => {
+      state.entity = e.target.value;
       render();
     });
     document.getElementById("range-from").addEventListener("change", (e) => {
@@ -936,7 +941,7 @@
     tooltipEl.className = "tooltip";
     document.body.appendChild(tooltipEl);
 
-    populateVesselSelect();
+    populateEntitySelect();
     populateCategoryFilter();
 
     // Shrink the whole timeline to fit one page width so printing/exporting
