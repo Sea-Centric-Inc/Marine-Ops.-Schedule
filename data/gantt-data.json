@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T11:33:01.776Z",
+  "generatedAt": "2026-09-25T16:47:49.422Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -158,18 +158,6 @@
       "status": "",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=8454403109093252",
       "category": "Vessel"
-    },
-    {
-      "id": "4714248546680708",
-      "name": "testing – 00111",
-      "entity": "testing",
-      "plannedStart": "2026-07-22",
-      "plannedEnd": "2026-07-30",
-      "actualStart": "",
-      "actualEnd": "",
-      "status": "",
-      "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=4714248546680708",
-      "category": "ECMI"
     }
   ]
 }
