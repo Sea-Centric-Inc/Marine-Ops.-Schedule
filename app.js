@@ -18,7 +18,7 @@
   // non-vessel entities the company has expanded into (Lewisporte, ECMI),
   // so they show up in the filter/availability dropdown even before they
   // have any tasks of their own.
-  const ENTITIES = ["Connor Murphy", "Patrick & William", "Strait Signet", "Strait Hunter", "Strait Explorer", "Lewisporte", "ECMI"];
+  const ENTITIES = ["Connor Murphy", "Patrick & William", "Strait Signet", "Strait Hunter", "Strait Explorer", "David Thompson", "Lewisporte", "ECMI"];
 
   // The company's 3 main project categories, matching the "Category" picklist
   // column's exact options in Smartsheet. A task's category comes from that
@@ -33,6 +33,7 @@
     statusFilter: "",
     categoryFilter: "",
     hideCompleted: false,
+    hidePreProject: false,
     dateFrom: null, // Date or null; null = auto-fit to task data
     dateTo: null,
     entity: "",
@@ -182,6 +183,14 @@
     const raw = String(task.category || "").trim();
     if (raw) return raw;
     return getEntity(task) ? "Vessel" : "";
+  }
+
+  // A task is still "pre-project" - just an RFP/quote sitting in the
+  // pipeline, not yet an active project - if it has no actual dates
+  // recorded (only anticipated ones, or nothing at all) and no Project No.
+  // has been assigned to it yet.
+  function isPreProject(task) {
+    return !task.actualStart && !task.actualEnd && !task.projectNo;
   }
 
   // Extensions are their own independent date range (not necessarily right
@@ -422,6 +431,7 @@
     if (state.statusFilter && slug !== state.statusFilter) return false;
     if (state.categoryFilter && getCategory(task) !== state.categoryFilter) return false;
     if (state.hideCompleted && slug === "complete") return false;
+    if (state.hidePreProject && isPreProject(task)) return false;
 
     if (state.dateFrom && state.dateTo) {
       const extent = taskDateExtent(task);
@@ -814,6 +824,7 @@
     if (state.statusFilter) params.set("status", state.statusFilter);
     if (state.categoryFilter) params.set("category", state.categoryFilter);
     if (state.hideCompleted) params.set("hideCompleted", "1");
+    if (state.hidePreProject) params.set("hidePreProject", "1");
     if (state.entity) params.set("entity", state.entity);
     if (state.dateFrom) params.set("from", formatDateInput(state.dateFrom));
     if (state.dateTo) params.set("to", formatDateInput(state.dateTo));
@@ -841,6 +852,10 @@
     if (params.get("hideCompleted") === "1") {
       state.hideCompleted = true;
       document.getElementById("hide-completed").checked = true;
+    }
+    if (params.get("hidePreProject") === "1") {
+      state.hidePreProject = true;
+      document.getElementById("hide-pre-project").checked = true;
     }
     if (params.has("entity")) {
       const entitySelect = document.getElementById("entity-select");
@@ -888,6 +903,10 @@
     });
     document.getElementById("hide-completed").addEventListener("change", (e) => {
       state.hideCompleted = e.target.checked;
+      render();
+    });
+    document.getElementById("hide-pre-project").addEventListener("change", (e) => {
+      state.hidePreProject = e.target.checked;
       render();
     });
     document.getElementById("entity-select").addEventListener("change", (e) => {
@@ -963,7 +982,7 @@
     try {
       const data = await loadData();
       state.tasks = data.tasks || [];
-      document.getElementById("sheet-name").textContent = data.sheetName || "Marine Operations Schedule";
+      document.getElementById("sheet-name").textContent = data.sheetName || "Operations Schedule";
       const generated = data.generatedAt ? new Date(data.generatedAt) : null;
       document.getElementById("generated-at").textContent = generated
         ? "Data as of " + generated.toLocaleString()

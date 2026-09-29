@@ -9,5 +9,6 @@
   "actualEnd": "Actual End Date",
   "percentComplete": "",
   "assignedTo": "",
-  "status": "Project Status"
+  "status": "Project Status",
+  "projectNo": "Project No."
 }

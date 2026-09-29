@@ -1,12 +1,16 @@
-# Marine Operations Schedule
+# Operations Schedule
 
 Entails commercial/project side WRT Smartsheet API & Instruction Documents.
 
-A Gantt chart for the marine operations schedule, showing **anticipated** (planned)
-and **actual** dates on separate bars for every task. Data is pulled from a
-Smartsheet on a schedule and displayed as a static site on GitHub Pages.
+A Gantt chart for the company's operations schedule (vessels plus the
+non-vessel entities it has since expanded into - Lewisporte, ECMI), showing
+**anticipated** (planned) and **actual** dates on separate bars for every
+task. Data is pulled from a Smartsheet (workspace: **Operations**) on a
+schedule and displayed as a static site on GitHub Pages.
 
-Live site (once Pages is enabled, see below):
+Live site (once Pages is enabled, see below) - repo/URL name unchanged
+(`Marine-Ops.-Schedule`) even though the sheet's workspace and the site's
+own branding are now "Operations":
 `https://sea-centric-inc.github.io/Marine-Ops.-Schedule/`
 
 ## How it works
@@ -34,11 +38,18 @@ overwrite it with real data.
 - **Dual-bar Gantt** - dashed "Anticipated" bar and a solid, status-colored
   "Actual" bar per task. Task names link directly to that row in Smartsheet
   (opens in a new tab) wherever a permalink was available from the sync.
-- **Search, status filter, category filter, hide-completed, date range** -
-  the toolbar above the chart; the date range also narrows what the Entity
-  Availability panel considers. Category is one of the company's 3 main
-  project categories (`CATEGORIES` near the top of `app.js`: Vessel, ECMI,
-  Lewisporte) - see "Project categories" below for how a task gets one.
+- **Search, status filter, category filter, hide-completed, hide-pre-project,
+  date range** - the toolbar above the chart; the date range also narrows
+  what the Entity Availability panel considers. Category is one of the
+  company's 3 main project categories (`CATEGORIES` near the top of
+  `app.js`: Vessel, ECMI, Lewisporte) - see "Project categories" below for
+  how a task gets one.
+- **Hide pre-project (RFP only)** - hides rows that are still just an
+  RFP/quote in the pipeline rather than an active project: no actual dates
+  recorded (anticipated dates only, or nothing at all) *and* no Project No.
+  assigned yet (see `isPreProject()` in `app.js`). Needs the sheet's
+  "Project No." column mapped as `projectNo` in
+  `config/smartsheet-map.json` (already done for this sheet).
 - **Entity Availability** - pick an entity (a vessel, or a non-vessel entity
   like Lewisporte/ECMI), see its open date gaps and percent utilization
   within the current date range. Its rows are also highlighted (accent left
@@ -172,7 +183,8 @@ this sheet's columns:
   "actualEnd": "Actual End Date",
   "percentComplete": "",
   "assignedTo": "",
-  "status": "Project Status"
+  "status": "Project Status",
+  "projectNo": "Project No."
 }
 ```
 
@@ -261,7 +273,7 @@ python -m http.server 8000         # or any static file server
 {
   "generatedAt": "2026-08-18T00:00:00Z",
   "source": "smartsheet",
-  "sheetName": "Marine Operations Schedule",
+  "sheetName": "Master/Gantt",
   "tasks": [
     {
       "id": "1",

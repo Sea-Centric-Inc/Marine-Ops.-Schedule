@@ -138,13 +138,16 @@ async function main() {
     if ((columnIdsByField.category || []).length) {
       task.category = String(get("category") || "");
     }
+    if ((columnIdsByField.projectNo || []).length) {
+      task.projectNo = String(get("projectNo") || "");
+    }
     tasks.push(task);
   });
 
   const output = {
     generatedAt: new Date().toISOString(),
     source: "smartsheet",
-    sheetName: sheet.name || "Marine Operations Schedule",
+    sheetName: sheet.name || "Operations Schedule",
     tasks
   };
 

@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Marine Operations - Schedule</title>
+<title>Operations - Schedule</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 <header class="app-header">
   <div class="app-header-title">
-    <h1>Marine Operations Schedule</h1>
+    <h1>Operations Schedule</h1>
     <p id="sheet-name" class="app-header-subtitle">Loading schedule&hellip;</p>
   </div>
   <div class="app-header-meta">
@@ -31,6 +31,10 @@
     <label class="checkbox-label">
       <input id="hide-completed" type="checkbox" />
       Hide completed
+    </label>
+    <label class="checkbox-label" title="Hides rows with anticipated dates only (no actual dates) and no Project No. assigned yet">
+      <input id="hide-pre-project" type="checkbox" />
+      Hide pre-project (RFP only)
     </label>
   </div>
   <div class="toolbar-group">
