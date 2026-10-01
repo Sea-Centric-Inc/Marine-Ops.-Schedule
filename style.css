@@ -501,6 +501,10 @@ a.task-name:hover, a.ext-summary-name:hover {
   text-overflow: ellipsis;
 }
 
+.row-label .task-project-no {
+  color: var(--accent);
+}
+
 .ext-row {
   display: flex;
   align-items: center;

@@ -355,6 +355,8 @@
     const extRange = getExtensionRange(task);
     tooltipEl.innerHTML =
       "<strong>" + escapeHtml(task.name) + "</strong>" +
+      (task.projectNo
+        ? "<div class='tt-row'><span>Project No.</span><span>" + escapeHtml(task.projectNo) + "</span></div>" : "") +
       "<div class='tt-row'><span>Category</span><span>" + escapeHtml(getCategory(task) || "—") + "</span></div>" +
       "<div class='tt-row'><span>Status</span><span>" + escapeHtml(displayStatusText(task, status)) + "</span></div>" +
       "<div class='tt-row'><span>Anticipated</span><span>" + formatDate(plannedStart) + " → " + formatDate(plannedEnd) + "</span></div>" +
@@ -501,6 +503,15 @@
         nameEl.title = "Open this row in Smartsheet";
       }
       nameEl.textContent = task.name;
+      label.appendChild(nameEl);
+
+      if (task.projectNo) {
+        const projectNoEl = document.createElement("div");
+        projectNoEl.className = "task-meta task-project-no";
+        projectNoEl.textContent = "Project No: " + task.projectNo;
+        label.appendChild(projectNoEl);
+      }
+
       const metaEl = document.createElement("div");
       metaEl.className = "task-meta";
       const metaParts = [];
@@ -508,7 +519,6 @@
       metaParts.push(displayStatusText(task, status));
       if (task.percentComplete !== undefined && task.percentComplete !== null) metaParts.push(task.percentComplete + "%");
       metaEl.textContent = metaParts.join(" • ");
-      label.appendChild(nameEl);
       label.appendChild(metaEl);
       label.appendChild(buildExtensionRow(task));
 
