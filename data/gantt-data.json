@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-07T14:39:21.816Z",
+  "generatedAt": "2026-10-07T20:27:15.703Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -135,16 +135,16 @@
     },
     {
       "id": "6202603295408004",
-      "name": "Strait Hunter – Quote 07-26",
-      "entity": "Strait Hunter",
+      "name": "Connor Murphy – Quote 07-26",
+      "entity": "Connor Murphy",
       "plannedStart": "2026-07-01",
       "plannedEnd": "2026-08-31",
-      "actualStart": "2026-07-30",
-      "actualEnd": "2026-10-07",
+      "actualStart": "2026-10-21",
+      "actualEnd": "2026-11-15",
       "status": "Planning Phase",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=6202603295408004",
       "category": "Vessel",
-      "projectNo": "SH-0001"
+      "projectNo": "CM-0004"
     },
     {
       "id": "3950803481722756",
@@ -183,7 +183,7 @@
       "status": "Completed",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=5009651381305220",
       "category": "Vessel",
-      "projectNo": "PW-0002"
+      "projectNo": "PW-0002.A"
     },
     {
       "id": "2881415629242244",
