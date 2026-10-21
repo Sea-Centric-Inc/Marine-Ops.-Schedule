@@ -2,8 +2,10 @@ name: Update Gantt Data
 
 on:
   schedule:
-    # Every 30 minutes. Adjust to taste - Smartsheet's API has generous rate limits.
-    - cron: "*/30 * * * *"
+    # Every 5 minutes (GitHub's minimum cron granularity) - Smartsheet's API
+    # has generous rate limits. This bounds how long a deleted/edited row can
+    # linger on the site to ~5 min instead of ~30. Adjust to taste.
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}
   push:
     branches: [main]

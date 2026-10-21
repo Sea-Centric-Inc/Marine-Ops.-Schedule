@@ -16,7 +16,7 @@ own branding are now "Operations":
 ## How it works
 
 ```
-Smartsheet  --(GitHub Action, every 30 min)-->  data/gantt-data.json  --> index.html (GitHub Pages)
+Smartsheet  --(GitHub Action, every 5 min)-->  data/gantt-data.json  --> index.html (GitHub Pages)
 ```
 
 - `scripts/fetch-smartsheet.js` calls the Smartsheet API and writes the result to
@@ -226,9 +226,12 @@ Repo **Actions** tab → **Update Gantt Data** → **Run workflow**. After it
 finishes, `data/gantt-data.json` will have your real schedule, and the Pages
 site will pick it up automatically.
 
-After that, it runs automatically every 30 minutes. Adjust the cron schedule
-in [`.github/workflows/update-data.yml`](.github/workflows/update-data.yml) if
-you want it more or less frequent.
+After that, it runs automatically every 5 minutes - so a deleted/edited row
+is reflected on the site within about 5 minutes, not 30. Adjust the cron
+schedule in
+[`.github/workflows/update-data.yml`](.github/workflows/update-data.yml) if
+you want it more or less frequent (5 minutes is GitHub's minimum cron
+granularity - anything tighter needs the webhook-based approach below).
 
 ### Customizing the entity list
 
@@ -307,7 +310,17 @@ The pipeline is deliberately simple so it's easy to build on:
 - Add summary tiles (on-time %, delayed count, upcoming milestones) computed
   client-side from `data/gantt-data.json` in a new script, no extra backend
   needed.
-- If you outgrow "refresh every 30 minutes," swap the GitHub Action for a
-  small serverless proxy that calls Smartsheet live on page load - the
-  frontend's `fetch("data/gantt-data.json")` call is the only place that would
-  need to change.
+- If you outgrow "refresh every 5 minutes," there are two ways to go closer
+  to real-time:
+  - **Webhook-triggered sync** - register a
+    [Smartsheet webhook](https://developers.smartsheet.com/api/smartsheet/openapi/webhooks)
+    on this sheet pointing at a small hosted receiver (e.g. an Azure
+    Function), which on each notification calls the GitHub API to fire a
+    `repository_dispatch` event and re-run this same workflow immediately,
+    instead of waiting for the next poll. Needs new infrastructure (the
+    receiver, plus a GitHub token secret for it to call the dispatch API).
+  - **Live proxy** - swap the GitHub Action for a small serverless proxy
+    that calls Smartsheet directly on page load - the frontend's
+    `fetch("data/gantt-data.json")` call is the only place that would need
+    to change, but the Smartsheet token would need to live behind that
+    proxy rather than only in a GitHub secret.
