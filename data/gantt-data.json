@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T15:39:34.422Z",
+  "generatedAt": "2026-10-22T19:29:19.187Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -197,6 +197,32 @@
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=2881415629242244",
       "category": "Vessel",
       "projectNo": "PW-0002.B"
+    },
+    {
+      "id": "2321761591885700",
+      "name": "Connor Murphy",
+      "entity": "Connor Murphy",
+      "plannedStart": "2026-12-22",
+      "plannedEnd": "2026-12-29",
+      "actualStart": "",
+      "actualEnd": "",
+      "status": "Planning Phase",
+      "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=2321761591885700",
+      "category": "Vessel",
+      "projectNo": ""
+    },
+    {
+      "id": "6965470568644484",
+      "name": "Connor Murphy",
+      "entity": "Connor Murphy",
+      "plannedStart": "2027-03-01",
+      "plannedEnd": "2027-03-16",
+      "actualStart": "",
+      "actualEnd": "",
+      "status": "Not Started",
+      "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=6965470568644484",
+      "category": "Vessel",
+      "projectNo": ""
     }
   ]
 }
