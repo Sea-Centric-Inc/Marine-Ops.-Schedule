@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T00:23:39.708Z",
+  "generatedAt": "2026-10-30T06:05:52.243Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -141,7 +141,7 @@
       "plannedEnd": "2026-08-31",
       "actualStart": "2026-10-21",
       "actualEnd": "2026-11-15",
-      "status": "Planning Phase",
+      "status": "",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=6202603295408004",
       "category": "Vessel",
       "projectNo": "CM-0004"
@@ -191,7 +191,7 @@
       "entity": "Patrick & William",
       "plannedStart": "2026-10-20",
       "plannedEnd": "2026-11-30",
-      "actualStart": "2026-10-21",
+      "actualStart": "2026-10-22",
       "actualEnd": "",
       "status": "Planning Phase",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=2881415629242244",
@@ -206,7 +206,7 @@
       "plannedEnd": "2026-12-29",
       "actualStart": "",
       "actualEnd": "",
-      "status": "Planning Phase",
+      "status": "Not Started",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=2321761591885700",
       "category": "Vessel",
       "projectNo": ""
