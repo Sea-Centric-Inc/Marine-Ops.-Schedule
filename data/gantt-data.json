@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T07:29:53.092Z",
+  "generatedAt": "2026-10-31T13:48:27.831Z",
   "source": "smartsheet",
   "sheetName": "Master/Gantt",
   "tasks": [
@@ -24,10 +24,10 @@
       "plannedEnd": "2026-06-30",
       "actualStart": "",
       "actualEnd": "",
-      "status": "",
+      "status": "Completed",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=5948262509117316",
       "category": "Vessel",
-      "projectNo": "NA"
+      "projectNo": "2026-01"
     },
     {
       "id": "3696462695432068",
@@ -40,7 +40,7 @@
       "status": "Completed",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=3696462695432068",
       "category": "Vessel",
-      "projectNo": "NA"
+      "projectNo": "2026-02"
     },
     {
       "id": "8200062322802564",
@@ -87,8 +87,8 @@
       "entity": "Connor Murphy",
       "plannedStart": "2026-07-05",
       "plannedEnd": "2026-07-18",
-      "actualStart": "2026-07-11",
-      "actualEnd": "2026-07-18",
+      "actualStart": "",
+      "actualEnd": "",
       "status": "",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=5076703388565380",
       "category": "Vessel",
@@ -121,30 +121,17 @@
       "projectNo": ""
     },
     {
-      "id": "1699003668037508",
-      "name": "Strait Signet – Quote 06-26",
-      "entity": "Strait Signet",
-      "plannedStart": "2026-09-01",
-      "plannedEnd": "2026-09-30",
-      "actualStart": "",
-      "actualEnd": "",
-      "status": "",
-      "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=1699003668037508",
-      "category": "Vessel",
-      "projectNo": ""
-    },
-    {
       "id": "6202603295408004",
       "name": "Connor Murphy – Quote 07-26",
       "entity": "Connor Murphy",
       "plannedStart": "2026-07-01",
       "plannedEnd": "2026-08-31",
-      "actualStart": "2026-10-21",
-      "actualEnd": "2026-11-15",
+      "actualStart": "",
+      "actualEnd": "",
       "status": "",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=6202603295408004",
       "category": "Vessel",
-      "projectNo": "CM-0004"
+      "projectNo": ""
     },
     {
       "id": "3950803481722756",
@@ -192,8 +179,8 @@
       "plannedStart": "2026-10-20",
       "plannedEnd": "2026-11-30",
       "actualStart": "2026-10-22",
-      "actualEnd": "",
-      "status": "Planning Phase",
+      "actualEnd": "2026-11-21",
+      "status": "Active",
       "link": "https://app.smartsheet.com/sheets/67G5vjM6wpCHgx3528C9mfxgG7v6g8g3pJ7jx4c1?rowId=2881415629242244",
       "category": "Vessel",
       "projectNo": "PW-0002.B"
